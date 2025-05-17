@@ -2,6 +2,7 @@ use crate::commands::list_keyboards;
 use clap::{Parser, Subcommand};
 
 mod commands;
+mod keyboard;
 
 // Control LEDS via HID
 #[derive(Parser)]
