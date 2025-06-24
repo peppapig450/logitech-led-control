@@ -1,6 +1,6 @@
-use std::collections::HashSet;
 use anyhow::Result;
 use hidapi::HidApi;
+use std::collections::HashSet;
 
 use crate::keyboard::{KeyboardModel, lookup_model};
 

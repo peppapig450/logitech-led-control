@@ -1,7 +1,7 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use hidapi::HidApi;
 
-use crate::keyboard::{model::lookup_model, KeyboardModel};
+use crate::keyboard::{KeyboardModel, model::lookup_model};
 
 /// Try to open a device by serial (or pick the first one) and print its details
 pub fn print_device(serial: Option<String>) -> Result<()> {
@@ -29,15 +29,29 @@ pub fn print_device(serial: Option<String>) -> Result<()> {
     };
 
     // Open the device
-    let _device = api.open_path(device_info.path())
+    let _device = api
+        .open_path(device_info.path())
         .map_err(|e| anyhow!("Failed to open device: {}", e))?;
 
     // Print out some info about the device
     println!("Opened device:");
-    println!("  VID: {:04x}, PID: {:04x}", device_info.vendor_id(), device_info.product_id());
-    println!("  Model: {:?}", lookup_model(device_info.vendor_id(), device_info.product_id()));
-    println!("  Manufacturer: {}", device_info.manufacturer_string().unwrap_or_default());
-    println!("  Product: {}", device_info.product_string().unwrap_or_default());
+    println!(
+        "  VID: {:04x}, PID: {:04x}",
+        device_info.vendor_id(),
+        device_info.product_id()
+    );
+    println!(
+        "  Model: {:?}",
+        lookup_model(device_info.vendor_id(), device_info.product_id())
+    );
+    println!(
+        "  Manufacturer: {}",
+        device_info.manufacturer_string().unwrap_or_default()
+    );
+    println!(
+        "  Product: {}",
+        device_info.product_string().unwrap_or_default()
+    );
     println!("  Serial:  {:?}", device_info.serial_number());
 
     Ok(())
