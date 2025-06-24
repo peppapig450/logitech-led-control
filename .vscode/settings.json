@@ -5,6 +5,10 @@
   "rust-analyzer.server.extraEnv": {
     "PATH": "/home/nick/.cargo/bin:${env:PATH}"
   },
-  "rust-analyzer.trace.server": "verbose",
-  "rust-analyzer.diagnostics.experimental.enable": true
+  "rust-analyzer.diagnostics.experimental.enable": true,
+  "rust-analyzer.inlayHints.lifetimeElisionHints.enable": "skip_trivial",
+  "rust-analyzer.inlayHints.bindingModeHints.enable": true,
+  // Disable these for now
+  // "rust-analyzer.cargo.features": "all",
+  // "rust-analyzer.check.features": "all",
 }
