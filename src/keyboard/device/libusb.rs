@@ -1,5 +1,4 @@
 use super::common::*;
-use crate::keyboard::{KeyboardModel, lookup_model};
 use anyhow::{Result, anyhow};
 use rusb::{self, Context, DeviceHandle, UsbContext};
 

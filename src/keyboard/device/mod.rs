@@ -1,7 +1,9 @@
 //! Device abstraction layer: re-exports the correct backend at compile time.
+#![allow(dead_code)]
+#![allow(unused_imports)]
 
 mod common;
-pub use common::*;
+pub use common::DeviceInfo;
 
 // Feature-gated backends
 #[cfg(feature = "libusb")]
