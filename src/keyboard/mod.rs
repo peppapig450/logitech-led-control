@@ -1,5 +1,6 @@
 pub mod device;
 pub mod model;
+pub mod packet;
 pub mod types;
 
 pub use model::{KeyboardModel, lookup_model};
