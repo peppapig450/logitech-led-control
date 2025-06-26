@@ -21,7 +21,7 @@ pub fn print_device(serial: Option<String>) -> Result<()> {
     let device_info = if let Some(serial_str) = serial {
         devices
             .into_iter()
-            .find(|d| d.serial_number().as_deref() == Some(serial_str.as_str()))
+            .find(|d| d.serial_number() == Some(serial_str.as_str()))
             .ok_or_else(|| anyhow!("No device with serial `{}` found", serial_str))?
     } else {
         // Fallback to the first supported device
