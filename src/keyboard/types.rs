@@ -21,47 +21,6 @@ pub enum OnBoardMode {
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum NativeEffectGroup {
-    Off,
-    Color,
-    Breathing,
-    Cycle,
-    Waves,
-    Ripple,
-}
-
-#[repr(u16)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum NativeEffect {
-    Off = 0,
-    Color = (NativeEffectGroup::Color as u16) << 8,
-    Breathing = (NativeEffectGroup::Breathing as u16) << 8,
-    Cycle = (NativeEffectGroup::Cycle as u16) << 8,
-    Waves = (NativeEffectGroup::Waves as u16) << 8,
-    HWave,
-    VWave,
-    CWave,
-    Ripple = (NativeEffectGroup::Ripple as u16) << 8,
-}
-
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum NativeEffectPart {
-    All = 0xff,
-    Keys = 0x00,
-    Logo,
-}
-
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum NativeEffectStorage {
-    None = 0x00,
-    /// User stored effect recalled with backlight+7
-    User,
-}
-
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KeyGroup {
     Logo = 0x00,
     Indicators,
