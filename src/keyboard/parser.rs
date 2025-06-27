@@ -1,10 +1,13 @@
 #![allow(dead_code)]
 
 use core::time::Duration;
-use phf::{phf_map, Map};
+use phf::{Map, phf_map};
 use std::borrow::Cow;
 
-use super::{Color, Key, KeyGroup, OnBoardMode, StartupMode};
+use super::{
+    Color, Key, KeyGroup, OnBoardMode, StartupMode,
+    effects::{NativeEffect, NativeEffectPart, NativeEffectStorage},
+};
 
 /// Parse a startup mode string.
 pub fn parse_startup_mode(s: &str) -> Option<StartupMode> {
@@ -280,4 +283,33 @@ pub fn parse_period(val: &str) -> Option<Duration> {
     }
 
     None
+}
+
+/// Parse a native effect name.
+pub fn parse_native_effect(s: &str) -> Option<NativeEffect> {
+    s.parse::<NativeEffect>().ok()
+}
+
+/// Parse a native effect part string.
+pub fn parse_native_effect_part(s: &str) -> Option<NativeEffectPart> {
+    s.parse::<NativeEffectPart>().ok()
+}
+
+/// Parse a native effect storage string.
+pub fn parse_native_effect_storage(s: &str) -> Option<NativeEffectStorage> {
+    s.parse::<NativeEffectStorage>().ok()
+}
+
+/// Parse a u8 value from decimal or hexadecimal form.
+pub fn parse_u8(val: &str) -> Option<u8> {
+    u8::from_str_radix(val, 16)
+        .ok()
+        .or_else(|| val.parse::<u8>().ok())
+}
+
+/// Parse a u16 value from decimal or hexadecimal form
+pub fn parse_u16(val: &str) -> Option<u16> {
+    u16::from_str_radix(val, 16)
+        .ok()
+        .or_else(|| val.parse::<u16>().ok())
 }

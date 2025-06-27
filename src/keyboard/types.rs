@@ -205,6 +205,16 @@ pub struct Color {
     pub blue: u8,
 }
 
+impl Default for Color {
+    fn default() -> Self {
+        Color {
+            red: 255,
+            green: 255,
+            blue: 255,
+        } // white
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct KeyValue {
     pub key: Key,

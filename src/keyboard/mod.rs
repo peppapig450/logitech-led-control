@@ -1,3 +1,4 @@
+pub mod api;
 pub mod device;
 pub mod effects;
 pub mod model;
