@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use core::time::Duration;
+use strum_macros::{Display, EnumString};
 
 use crate::keyboard::{
     Color, KeyboardModel,
@@ -11,7 +12,8 @@ type Packet = Vec<u8>;
 type Packets = Vec<Packet>;
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, Display)]
+#[strum(ascii_case_insensitive, serialize_all = "kebab-case")]
 pub enum NativeEffectGroup {
     Off,
     Color,
@@ -22,7 +24,8 @@ pub enum NativeEffectGroup {
 }
 
 #[repr(u16)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, Display)]
+#[strum(ascii_case_insensitive, serialize_all = "kebab-case")]
 pub enum NativeEffect {
     Off = 0,
     Color = (NativeEffectGroup::Color as u16) << 8,
@@ -45,7 +48,8 @@ impl NativeEffect {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, Display)]
+#[strum(ascii_case_insensitive, serialize_all = "kebab-case")]
 pub enum NativeEffectPart {
     All = 0xff,
     Keys = 0x00,
@@ -53,7 +57,8 @@ pub enum NativeEffectPart {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, Display)]
+#[strum(ascii_case_insensitive, serialize_all = "kebab-case")]
 pub enum NativeEffectStorage {
     None = 0x00,
     /// User stored effect recalled with backlight+7

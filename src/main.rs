@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 
 mod commands;
 mod keyboard;
+mod profile;
 
 use crate::commands::{list_keyboards, print_device};
 
