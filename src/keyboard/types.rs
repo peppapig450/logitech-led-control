@@ -2,9 +2,11 @@
 
 use core::fmt;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use strum_macros::{Display, EnumString};
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, Display)]
+#[strum(ascii_case_insensitive, serialize_all = "kebab-case")]
 pub enum StartupMode {
     /// built-in wave effect on startup
     Wave = 0x01,
@@ -13,14 +15,16 @@ pub enum StartupMode {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, Display)]
+#[strum(ascii_case_insensitive, serialize_all = "kebab-case")]
 pub enum OnBoardMode {
     Board = 0x01,
     Software,
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, Display)]
+#[strum(ascii_case_insensitive, serialize_all = "kebab-case")]
 pub enum KeyGroup {
     Logo = 0x00,
     Indicators,
