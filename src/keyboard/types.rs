@@ -1,8 +1,11 @@
 #![allow(dead_code)]
 
 use core::fmt;
+use core::str::FromStr;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 use strum_macros::{Display, EnumString};
+
+use super::parser::{parse_color, parse_key};
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, Display)]
@@ -23,7 +26,7 @@ pub enum OnBoardMode {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, Display)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
 #[strum(ascii_case_insensitive, serialize_all = "kebab-case")]
 pub enum KeyGroup {
     Logo = 0x00,
@@ -36,6 +39,27 @@ pub enum KeyGroup {
     Arrows,
     Numeric,
     Keys,
+}
+
+impl FromStr for KeyGroup {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let normalized = s.trim().to_ascii_lowercase().replace('_', "-");
+        match normalized.as_str() {
+            "logo" => Ok(KeyGroup::Logo),
+            "indicators" => Ok(KeyGroup::Indicators),
+            "multimedia" => Ok(KeyGroup::Multimedia),
+            "gkeys" | "g-keys" => Ok(KeyGroup::GKeys),
+            "fkeys" | "f-keys" => Ok(KeyGroup::FKeys),
+            "modifiers" => Ok(KeyGroup::Modifiers),
+            "functions" => Ok(KeyGroup::Functions),
+            "arrows" => Ok(KeyGroup::Arrows),
+            "numeric" => Ok(KeyGroup::Numeric),
+            "keys" => Ok(KeyGroup::Keys),
+            _ => Err(format!("invalid key group: {s}")),
+        }
+    }
 }
 
 /// Two-byte scan code: high byte = address group, low byte = HID/key code.
@@ -198,6 +222,14 @@ impl fmt::Display for Key {
     }
 }
 
+impl FromStr for Key {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        parse_key(s).ok_or_else(|| format!("invalid key: {s}"))
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Color {
     pub red: u8,
@@ -212,6 +244,14 @@ impl Default for Color {
             green: 255,
             blue: 255,
         } // white
+    }
+}
+
+impl FromStr for Color {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        parse_color(s).ok_or_else(|| format!("invalid color: {s}"))
     }
 }
 
