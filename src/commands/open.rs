@@ -4,7 +4,7 @@ use hidapi::HidApi;
 use crate::keyboard::{KeyboardModel, model::lookup_model};
 
 /// Try to open a device by serial (or pick the first one) and print its details
-pub fn print_device(serial: Option<String>) -> Result<()> {
+pub fn print_device(serial: Option<&str>) -> Result<()> {
     let api = HidApi::new()?;
 
     // Collect all supported devices
@@ -21,7 +21,7 @@ pub fn print_device(serial: Option<String>) -> Result<()> {
     let device_info = if let Some(serial_str) = serial {
         devices
             .into_iter()
-            .find(|d| d.serial_number() == Some(serial_str.as_str()))
+            .find(|d| d.serial_number() == Some(serial_str))
             .ok_or_else(|| anyhow!("No device with serial `{}` found", serial_str))?
     } else {
         // Fallback to the first supported device
