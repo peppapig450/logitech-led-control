@@ -273,4 +273,28 @@ impl KeyboardApi for crate::keyboard::device::Keyboard {
 
         Ok(())
     }
+
+    fn set_fx(
+        &mut self,
+        effect: NativeEffect,
+        part: NativeEffectPart,
+        period: Duration,
+        color: Color,
+        storage: NativeEffectStorage,
+    ) -> Result<()> {
+        let model = self
+            .current_device()
+            .ok_or_else(|| anyhow!("no device open"))?
+            .model;
+
+        if let Some(packets) =
+            keyboard::native_effect_packets(model, effect, part, period, color, storage)
+        {
+            for packet in packets {
+                self.send_packet(&packet)?;
+            }
+        }
+
+        Ok(())
+    }
 }
