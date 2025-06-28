@@ -7,5 +7,5 @@ pub mod parser;
 pub mod types;
 
 pub use effects::*;
-pub use model::{KeyboardModel, lookup_model};
+pub use model::*;
 pub use types::*;

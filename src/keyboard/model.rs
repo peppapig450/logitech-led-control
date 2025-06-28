@@ -1,3 +1,5 @@
+use std::sync::{LazyLock, RwLock};
+
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KeyboardModel {
@@ -44,8 +46,34 @@ pub const SUPPORTED_KEYBOARDS: &[(u16, u16, KeyboardModel)] = &[
     kb!(0xc339, KeyboardModel::GPro), // Covers both G Pro and Pro X
 ];
 
+/// Optional override for the supported keyboard list.
+static SUPPORTED_OVERRIDE: LazyLock<RwLock<Option<Vec<(u16, u16, KeyboardModel)>>>> =
+    LazyLock::new(|| RwLock::new(None));
+
+/// Replace the supported keyboard list used during device detection.
+pub fn set_supported_override(list: Vec<(u16, u16, KeyboardModel)>) {
+    *SUPPORTED_OVERRIDE.write().unwrap() = Some(list);
+}
+
+/// Clear any previously set override list.
+pub fn clear_supported_override() {
+    *SUPPORTED_OVERRIDE.write().unwrap() = None;
+}
+
 // Lookup a model by VID/PID, falls bac kto `Unknown`
 pub fn lookup_model(vid: u16, pid: u16) -> KeyboardModel {
+    if let Some(list) = &*SUPPORTED_OVERRIDE.read().unwrap() {
+        return list
+            .iter()
+            .find_map(|&(v, p, model)| {
+                if v == vid && p == pid {
+                    Some(model)
+                } else {
+                    None
+                }
+            })
+            .unwrap_or(KeyboardModel::Unknown);
+    }
     SUPPORTED_KEYBOARDS
         .iter()
         .find_map(|&(v, p, model)| {
