@@ -141,4 +141,17 @@ impl KeyboardApi for crate::keyboard::device::Keyboard {
         }
         Ok(())
     }
+
+    fn set_region(&mut self, region: u8, color: Color) -> Result<()> {
+        let model = self
+            .current_device()
+            .ok_or_else(|| anyhow!("no device open"))?
+            .model;
+
+        if let Some(packet) = keyboard::packet::region_packet(model, region, color) {
+            self.send_packet(&packet)?;
+        }
+
+        Ok(())
+    }
 }
