@@ -386,19 +386,17 @@ where
     let vid = vendor_id.unwrap_or(LOGITECH_VENDOR_ID);
     let pid = product_id.unwrap_or(0);
 
-    if let Some(protocol_id) = protocol {
-        if let Some(model) = match protocol_id {
-            1 => Some(KeyboardModel::G810),
-            2 => Some(KeyboardModel::G910),
-            3 => Some(KeyboardModel::G213),
-            4 => Some(KeyboardModel::G815),
-            _ => None,
-        } {
-            // NOTE: this could probably be a static sized array,
-            // and the SUPPORTED_DEVICES and override could be a
-            // triplet.
-            model::set_supported_override(vec![(vid, pid, model)]);
-        }
+    if let Some(model) = protocol.and_then(|id| match id {
+        1 => Some(KeyboardModel::G810),
+        2 => Some(KeyboardModel::G910),
+        3 => Some(KeyboardModel::G213),
+        4 => Some(KeyboardModel::G815),
+        _ => None,
+    }) {
+        // NOTE: this could probably be a static sized array,
+        // and the SUPPORTED_DEVICES and override could be a
+        // triplet.
+        model::set_supported_override(vec![(vid, pid, model)]);
     }
 
     let mut kbd = Keyboard::open(vid, pid, serial.as_deref())?;
