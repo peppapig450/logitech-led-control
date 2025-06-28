@@ -1,5 +1,4 @@
 //! Device abstraction layer: re-exports the correct backend at compile time.
-#![allow(dead_code)]
 #![allow(unused_imports)]
 
 mod common;

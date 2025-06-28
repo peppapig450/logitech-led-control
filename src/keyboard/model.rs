@@ -46,9 +46,11 @@ pub const SUPPORTED_KEYBOARDS: &[(u16, u16, KeyboardModel)] = &[
     kb!(0xc339, KeyboardModel::GPro), // Covers both G Pro and Pro X
 ];
 
+type ModelOverride = Vec<(u16, u16, KeyboardModel)>;
+type OverrideState = RwLock<Option<ModelOverride>>;
+
 /// Optional override for the supported keyboard list.
-static SUPPORTED_OVERRIDE: LazyLock<RwLock<Option<Vec<(u16, u16, KeyboardModel)>>>> =
-    LazyLock::new(|| RwLock::new(None));
+static SUPPORTED_OVERRIDE: LazyLock<OverrideState> = LazyLock::new(|| RwLock::new(None));
 
 /// Replace the supported keyboard list used during device detection.
 pub fn set_supported_override(list: Vec<(u16, u16, KeyboardModel)>) {
@@ -60,7 +62,7 @@ pub fn clear_supported_override() {
     *SUPPORTED_OVERRIDE.write().unwrap() = None;
 }
 
-// Lookup a model by VID/PID, falls bac kto `Unknown`
+// Lookup a model by VID/PID, falls back to `Unknown`
 pub fn lookup_model(vid: u16, pid: u16) -> KeyboardModel {
     if let Some(list) = &*SUPPORTED_OVERRIDE.read().unwrap() {
         return list

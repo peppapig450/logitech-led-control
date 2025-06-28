@@ -1,46 +1,30 @@
 use anyhow::Result;
-use hidapi::HidApi;
 use std::collections::HashSet;
 
-use crate::keyboard::{KeyboardModel, lookup_model};
+use crate::keyboard::device::Keyboard;
 
 /// List all supported Logitech keyboards, once each.
-/// Fitlers out unknown models and deduplicates by serial or path.
+/// Filters out unknown models and deduplicates by serial or path.
 pub fn list_keyboards() -> Result<()> {
-    let api = HidApi::new()?;
+    let devices = Keyboard::list_keyboards()?;
     let mut seen = HashSet::new();
 
-    for dev in api.device_list() {
-        let vid = dev.vendor_id();
-        let pid = dev.product_id();
-
-        // Map VID/PID to our enum; skip unsupported devices
-        let model = lookup_model(vid, pid);
-        if model == KeyboardModel::Unknown {
-            continue;
-        }
-
-        // Choose a stable dedupe key: prefer serial, else use the raw path
-        let key = dev
-            .serial_number()
-            .filter(|s| !s.is_empty())
-            .map(|s| s.to_owned())
-            .unwrap_or_else(|| dev.path().to_string_lossy().into_owned());
-
-        // If we've already printed this one, skip it
-        if !seen.insert(key) {
-            continue;
+    for dev in devices {
+        if let Some(serial_num) = &dev.serial_number {
+            if !seen.insert(serial_num.clone()) {
+                continue;
+            }
         }
 
         println!(
             "{:04x}:{:04x} {:<6?} - {} {} (serial: {:?})",
-            vid,
-            pid,
-            model,
-            dev.manufacturer_string().unwrap_or_default(),
-            dev.product_string().unwrap_or_default(),
-            dev.serial_number(),
-        );
+            dev.vendor_id,
+            dev.product_id,
+            dev.model,
+            dev.manufacturer.as_deref().unwrap_or_default(),
+            dev.product.as_deref().unwrap_or_default(),
+            dev.serial_number,
+        )
     }
 
     Ok(())

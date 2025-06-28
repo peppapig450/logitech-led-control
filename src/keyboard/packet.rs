@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::keyboard::{
     Color, Key, KeyValue, KeyboardModel, NativeEffect, NativeEffectPart, NativeEffectStorage,
 };

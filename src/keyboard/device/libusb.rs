@@ -7,7 +7,7 @@ use rusb::{
 };
 
 pub struct Keyboard {
-    ctx: rusb::Context,
+    _ctx: rusb::Context,
     handle: Option<DeviceHandle<Context>>,
     current: Option<DeviceInfo>,
     kernel_detached: bool,
@@ -106,7 +106,7 @@ impl Keyboard {
             return Err(anyhow!("{}", e));
         }
         Ok(Self {
-            ctx,
+            _ctx: ctx,
             handle: Some(handle),
             current: Some(info),
             kernel_detached: true,

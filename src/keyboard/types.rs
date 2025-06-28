@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use core::fmt;
 use core::str::FromStr;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
