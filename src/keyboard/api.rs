@@ -229,4 +229,48 @@ impl KeyboardApi for crate::keyboard::device::Keyboard {
 
         Ok(())
     }
+
+    fn set_startup_mode(&mut self, mode: StartupMode) -> Result<()> {
+        let model = self
+            .current_device()
+            .ok_or_else(|| anyhow!("no device open"))?
+            .model;
+
+        let packet: Option<Vec<u8>> = match model {
+            KeyboardModel::G213
+            | KeyboardModel::G410
+            | KeyboardModel::G610
+            | KeyboardModel::G810
+            | KeyboardModel::GPro => Some(vec![0x11, 0xff, 0x0d, 0x5a, 0x00, 0x01]),
+            KeyboardModel::G910 => Some(vec![0x11, 0xff, 0x10, 0x5e, 0x00, 0x01]),
+            _ => None,
+        };
+
+        if let Some(mut data) = packet {
+            data.push(mode as u8);
+            data.resize(20, 0x00);
+            self.send_packet(&data)?;
+        }
+
+        Ok(())
+    }
+
+    fn set_on_board_mode(&mut self, mode: OnBoardMode) -> Result<()> {
+        let model = self
+            .current_device()
+            .ok_or_else(|| anyhow!("no device open"))?
+            .model;
+
+        let packet: Option<Vec<u8>> = match model {
+            KeyboardModel::G815 => Some(vec![0x11, 0xff, 0x11, 0x1a, mode as u8]),
+            _ => None,
+        };
+
+        if let Some(mut data) = packet {
+            data.resize(20, 0x00);
+            self.send_packet(&data)?;
+        }
+
+        Ok(())
+    }
 }
