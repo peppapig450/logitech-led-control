@@ -1,9 +1,11 @@
 use crate::keyboard::{
-    self as keyboard, Color, KeyGroup, KeyValue, NativeEffect, NativeEffectPart,
+    self as keyboard, Color, KeyGroup, KeyValue, KeyboardModel, NativeEffect, NativeEffectPart,
     NativeEffectStorage, OnBoardMode, StartupMode,
 };
 use anyhow::{Result, anyhow};
 use core::time::Duration;
+use std::collections::BTreeMap;
+use strum::IntoEnumIterator;
 
 /// High level keyboard operations.
 ///
@@ -73,6 +75,70 @@ impl KeyboardApi for crate::keyboard::device::Keyboard {
             self.send_packet(&packet)?;
         }
 
+        Ok(())
+    }
+
+    fn set_keys(&mut self, keys: &[KeyValue]) -> Result<()> {
+        if keys.is_empty() {
+            return Ok(());
+        }
+
+        let model = self
+            .current_device()
+            .ok_or_else(|| anyhow!("no device open"))?
+            .model;
+
+        match model {
+            KeyboardModel::G213 | KeyboardModel::G413 => return Ok(()),
+            KeyboardModel::G815 => {
+                let mut by_color: BTreeMap<(u8, u8, u8), Vec<KeyValue>> = BTreeMap::new();
+                for &kv in keys {
+                    by_color
+                        .entry((kv.color.red, kv.color.green, kv.color.blue))
+                        .or_default()
+                        .push(kv);
+                }
+
+                for vals in by_color.values() {
+                    for chunk in vals.chunks(13) {
+                        if let Some(packet) = keyboard::packet::set_keys_packet(model, chunk) {
+                            self.send_packet(&packet)?;
+                        }
+                    }
+                }
+            }
+            _ => {
+                let mut by_group: BTreeMap<u8, Vec<KeyValue>> = BTreeMap::new();
+                for &kv in keys {
+                    by_group.entry(kv.key.group()).or_default().push(kv);
+                }
+
+                for (group, vals) in by_group {
+                    let size = if group == 0 { 20 } else { 64 };
+                    let max_keys = (size - 8) / 4;
+
+                    for chunk in vals.chunks(max_keys) {
+                        if let Some(packet) = keyboard::packet::set_keys_packet(model, chunk) {
+                            self.send_packet(&packet)?;
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn set_group_keys(&mut self, group: KeyGroup, color: Color) -> Result<()> {
+        let keys: Vec<KeyValue> = group.keys().map(|k| KeyValue { key: k, color }).collect();
+
+        self.set_keys(&keys)
+    }
+
+    fn set_all_keys(&mut self, color: Color) -> Result<()> {
+        for group in KeyGroup::iter() {
+            self.set_group_keys(group, color)?;
+        }
         Ok(())
     }
 }

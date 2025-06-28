@@ -3,7 +3,8 @@
 use core::fmt;
 use core::str::FromStr;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
-use strum_macros::{Display, EnumString};
+use strum::IntoEnumIterator;
+use strum_macros::{Display, EnumIter, EnumString};
 
 use super::parser::{parse_color, parse_key};
 
@@ -26,7 +27,7 @@ pub enum OnBoardMode {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Display, EnumIter)]
 #[strum(ascii_case_insensitive, serialize_all = "kebab-case")]
 pub enum KeyGroup {
     Logo = 0x00,
@@ -62,6 +63,13 @@ impl FromStr for KeyGroup {
     }
 }
 
+impl KeyGroup {
+    /// Lazily iterate the keys that belong to this group.
+    pub fn keys(self) -> impl Iterator<Item = Key> {
+        Key::iter().filter(move |k| k.group() == self as u8)
+    }
+}
+
 /// Two-byte scan code: high byte = address group, low byte = HID/key code.
 ///
 /// *We keep every discriminant explicit so the layout never changes.*
@@ -72,10 +80,11 @@ impl FromStr for KeyGroup {
     Copy,
     PartialEq,
     Eq,
+    EnumIter,
     IntoPrimitive,    // `into(): u16`
     TryFromPrimitive, // `Key::try_from(u16)`
 )]
-#[non_exhaustive] // lets you add a variant later without a breaking change
+#[non_exhaustive]
 #[allow(non_camel_case_types)]
 pub enum Key {
     Logo = 0x0001,
