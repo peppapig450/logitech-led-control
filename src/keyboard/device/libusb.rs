@@ -1,6 +1,10 @@
+use std::time::Duration;
+
 use super::common::*;
 use anyhow::{Result, anyhow};
-use rusb::{self, Context, DeviceHandle, UsbContext};
+use rusb::{
+    self, Context, DeviceHandle, Direction, Recipient, RequestType, UsbContext, request_type,
+};
 
 pub struct Keyboard {
     ctx: rusb::Context,
@@ -123,5 +127,29 @@ impl Keyboard {
     /// Get information about the currently opened device.
     pub fn current_device(&self) -> Option<&DeviceInfo> {
         self.current.as_ref()
+    }
+
+    /// Send a raw HID output report to the keyboard using a USB control transfer.
+    ///
+    /// This uses the HID class-specific **SET_REPORT (0x09)** request with:
+    /// - **wValue** = (`report_type` << 8) \| `report_id`
+    /// - `report_type` = **0x02** (*Output Report*)
+    /// - `report_id` = **0x12** if `data.len() > 20`, else **0x11**
+    ///
+    /// These report IDs and behavior are defined by the keyboard's firmware.
+    pub fn send_packet(&mut self, data: &[u8]) -> Result<()> {
+        let handle = self
+            .handle
+            .as_mut()
+            .ok_or_else(|| anyhow!("no device open"))?;
+
+        let value = if data.len() > 20 { 0x0212 } else { 0x0211 };
+        let req_type = request_type(Direction::Out, RequestType::Class, Recipient::Interface);
+
+        handle
+            .write_control(req_type, 0x09, value, 1, data, Duration::from_millis(2000))
+            .map_err(|e| anyhow!("{}", e))?;
+
+        Ok(())
     }
 }

@@ -73,4 +73,23 @@ impl Keyboard {
     pub fn current_device(&self) -> Option<&DeviceInfo> {
         self.current.as_ref()
     }
+
+    /// Send a raw HID packet to the keyboard.
+    pub fn send_packet(&mut self, data: &[u8]) -> Result<()> {
+        let dev = self
+            .device
+            .as_ref()
+            .ok_or_else(|| anyhow!("no device open"))?;
+
+        match data.len() {
+            0..20 => {
+                dev.write(data)?;
+            }
+            64 => {
+                dev.write(data)?;
+            }
+            n => return Err(anyhow!("invalid packet length: {n}")),
+        }
+        Ok(())
+    }
 }
