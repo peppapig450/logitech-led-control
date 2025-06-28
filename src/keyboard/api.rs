@@ -1,8 +1,8 @@
 use crate::keyboard::{
-    Color, KeyGroup, KeyValue, NativeEffect, NativeEffectPart, NativeEffectStorage, OnBoardMode,
-    StartupMode,
+    self as keyboard, Color, KeyGroup, KeyValue, NativeEffect, NativeEffectPart,
+    NativeEffectStorage, OnBoardMode, StartupMode,
 };
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use core::time::Duration;
 
 /// High level keyboard operations.
@@ -62,4 +62,17 @@ pub trait KeyboardApi {
     }
 }
 
-impl KeyboardApi for crate::keyboard::device::Keyboard {}
+impl KeyboardApi for crate::keyboard::device::Keyboard {
+    fn commit(&mut self) -> Result<()> {
+        let model = self
+            .current_device()
+            .ok_or_else(|| anyhow!("no device open"))?
+            .model;
+
+        if let Some(packet) = keyboard::packet::commit_packet(model) {
+            self.send_packet(&packet)?;
+        }
+
+        Ok(())
+    }
+}
