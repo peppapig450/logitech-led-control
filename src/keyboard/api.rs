@@ -10,7 +10,6 @@ use strum::IntoEnumIterator;
 /// High level keyboard operations.
 ///
 /// These are stubs for now so that the profile parser can call a uniform API.
-#[allow(dead_code)]
 pub trait KeyboardApi {
     fn commit(&mut self) -> Result<()> {
         Ok(())

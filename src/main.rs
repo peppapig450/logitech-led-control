@@ -288,7 +288,7 @@ impl Commands {
                 opts.product_id,
                 opts.protocol,
                 serial.serial.as_deref(),
-                |kbd| profile::load_profile(kbd, &path),
+                |kbd| profile::load_profile(kbd, path),
             ),
             Commands::PipeProfile { serial } => with_keyboard(
                 opts.vendor_id,
@@ -399,7 +399,7 @@ where
         model::set_supported_override(vec![(vid, pid, model)]);
     }
 
-    let mut kbd = Keyboard::open(vid, pid, serial.as_deref())?;
+    let mut kbd = Keyboard::open(vid, pid, serial)?;
     let res = f(&mut kbd);
     kbd.close().ok();
     model::clear_supported_override(); // NOTE: move this into `kbd.close`?

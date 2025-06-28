@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use core::time::Duration;
 use phf::{Map, phf_map};
 use std::borrow::Cow;

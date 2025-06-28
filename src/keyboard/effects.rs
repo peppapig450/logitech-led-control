@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use core::time::Duration;
 use strum_macros::{Display, EnumString};
 
