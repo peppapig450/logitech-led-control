@@ -14,7 +14,7 @@ fn to_device_info_hid(dev: &hidapi::DeviceInfo) -> DeviceInfo {
 }
 
 pub struct Keyboard {
-    api: HidApi,
+    _api: HidApi,
     device: Option<HidDevice>,
     current: Option<DeviceInfo>,
 }
@@ -55,7 +55,7 @@ impl Keyboard {
         let device = api.open_path(dev_info.path())?;
         let info = to_device_info_hid(dev_info);
         Ok(Self {
-            api,
+            _api: api,
             device: Some(device),
             current: Some(info),
         })
