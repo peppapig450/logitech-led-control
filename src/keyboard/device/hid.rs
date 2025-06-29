@@ -82,7 +82,7 @@ impl Keyboard {
             .ok_or_else(|| anyhow!("no device open"))?;
 
         match data.len() {
-            0..20 => {
+            0..=20 => {
                 dev.write(data)?;
             }
             64 => {
