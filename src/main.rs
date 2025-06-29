@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use keyboard::api::KeyboardApi;
 
 mod commands;
+mod help;
 mod keyboard;
 mod profile;
 
@@ -178,6 +179,18 @@ enum Commands {
         serial: SerialArg,
         mode: OnBoardMode,
     },
+
+    /// Display help for keys
+    #[command(name = "help-keys")]
+    HelpKeys,
+
+    /// Display help for lighting effects
+    #[command(name = "help-effects")]
+    HelpEffects,
+
+    /// Show usage samples
+    #[command(name = "help-samples")]
+    HelpSamples,
 }
 
 impl Commands {
@@ -357,6 +370,18 @@ impl Commands {
                 serial.serial.as_deref(),
                 |kbd| kbd.set_on_board_mode(*mode),
             ),
+            Commands::HelpKeys => {
+                help::print_keys_help();
+                Ok(())
+            }
+            &Commands::HelpEffects => {
+                help::print_effects_help();
+                Ok(())
+            }
+            &Commands::HelpSamples => {
+                help::print_samples_help();
+                Ok(())
+            }
         }
     }
 }
