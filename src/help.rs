@@ -97,7 +97,7 @@ Group keys :
     slash
 ";
 
-    println!("{}", HELP);
+    println!("{HELP}");
 }
 
 pub fn print_effects_help() {
