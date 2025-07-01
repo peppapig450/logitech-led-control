@@ -190,3 +190,168 @@ where
 {
     parse_profile(kbd, stdin, strict)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::keyboard::{
+        Color, Key, KeyGroup, KeyValue, NativeEffect, NativeEffectPart, NativeEffectStorage,
+        api::KeyboardApi,
+    };
+    use std::time::Duration;
+
+    #[derive(Default)]
+    struct MockKeyboard {
+        commits: usize,
+        all_calls: Vec<Color>,
+        group_calls: Vec<(KeyGroup, Color)>,
+        key_calls: Vec<Vec<KeyValue>>, // each call collects slice
+        region_calls: Vec<(u8, Color)>,
+        fx_calls: Vec<(
+            NativeEffect,
+            NativeEffectPart,
+            Duration,
+            Color,
+            NativeEffectStorage,
+        )>,
+    }
+
+    impl KeyboardApi for MockKeyboard {
+        fn commit(&mut self) -> anyhow::Result<()> {
+            self.commits += 1;
+            Ok(())
+        }
+
+        fn set_all_keys(&mut self, color: Color) -> anyhow::Result<()> {
+            self.all_calls.push(color);
+            Ok(())
+        }
+
+        fn set_group_keys(&mut self, group: KeyGroup, color: Color) -> anyhow::Result<()> {
+            self.group_calls.push((group, color));
+            Ok(())
+        }
+
+        fn set_keys(&mut self, keys: &[KeyValue]) -> anyhow::Result<()> {
+            self.key_calls.push(keys.to_vec());
+            Ok(())
+        }
+
+        fn set_region(&mut self, region: u8, color: Color) -> anyhow::Result<()> {
+            self.region_calls.push((region, color));
+            Ok(())
+        }
+
+        fn set_fx(
+            &mut self,
+            effect: NativeEffect,
+            part: NativeEffectPart,
+            period: Duration,
+            color: Color,
+            storage: NativeEffectStorage,
+        ) -> anyhow::Result<()> {
+            self.fx_calls.push((effect, part, period, color, storage));
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn parse_keys_and_commit() {
+        let input = "k a ff0000\nk b 00ff00\nc\n";
+        let mut mock = MockKeyboard::default();
+        parse_profile(&mut mock, input.as_bytes(), true).unwrap();
+
+        assert_eq!(mock.key_calls.len(), 1);
+        assert_eq!(
+            mock.key_calls[0],
+            vec![
+                KeyValue {
+                    key: Key::A,
+                    color: Color {
+                        red: 0xff,
+                        green: 0x00,
+                        blue: 0x00
+                    }
+                },
+                KeyValue {
+                    key: Key::B,
+                    color: Color {
+                        red: 0x00,
+                        green: 0xff,
+                        blue: 0x00
+                    }
+                },
+            ]
+        );
+        assert_eq!(mock.commits, 1);
+    }
+
+    #[test]
+    fn parse_group_region_effect() {
+        let input = "a 010203\ng arrows ff0000\nr 2 00ff00\nfx color keys ff0000\n";
+        let mut mock = MockKeyboard::default();
+        parse_profile(&mut mock, input.as_bytes(), true).unwrap();
+
+        assert_eq!(
+            mock.all_calls,
+            vec![Color {
+                red: 1,
+                green: 2,
+                blue: 3
+            }]
+        );
+        assert_eq!(
+            mock.group_calls,
+            vec![(
+                KeyGroup::Arrows,
+                Color {
+                    red: 0xff,
+                    green: 0x00,
+                    blue: 0x00
+                }
+            )]
+        );
+        assert_eq!(
+            mock.region_calls,
+            vec![(
+                2,
+                Color {
+                    red: 0x00,
+                    green: 0xff,
+                    blue: 0x00
+                }
+            )]
+        );
+        assert_eq!(mock.fx_calls.len(), 1);
+        let (eff, part, period, color, storage) = &mock.fx_calls[0];
+        assert_eq!(*eff, NativeEffect::Color);
+        assert_eq!(*part, NativeEffectPart::Keys);
+        assert_eq!(*period, Duration::from_millis(0));
+        assert_eq!(
+            *color,
+            Color {
+                red: 0xff,
+                green: 0x00,
+                blue: 0x00
+            }
+        );
+        assert_eq!(*storage, NativeEffectStorage::None);
+    }
+
+    #[test]
+    fn unknown_command_non_strict() {
+        let input = "foo\n";
+        let mut mock = MockKeyboard::default();
+        parse_profile(&mut mock, input.as_bytes(), false).unwrap();
+        assert!(mock.commits == 0);
+        assert!(mock.key_calls.is_empty());
+    }
+
+    #[test]
+    fn unknown_command_strict() {
+        let input = "bar\n";
+        let mut mock = MockKeyboard::default();
+        let err = parse_profile(&mut mock, input.as_bytes(), true).unwrap_err();
+        assert!(err.to_string().contains("unknown command"));
+    }
+}
