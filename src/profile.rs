@@ -6,7 +6,7 @@ use std::{
     path::Path,
 };
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 
 use crate::keyboard::parser::{
     parse_board_mode, parse_color, parse_key, parse_key_group, parse_native_effect,
@@ -16,7 +16,7 @@ use crate::keyboard::parser::{
 use crate::keyboard::{Color, KeyValue, NativeEffect, NativeEffectStorage, api::KeyboardApi};
 
 /// Parse a profile from any buffered reader
-pub fn parse_profile<K>(kbd: &mut K, mut reader: impl BufRead) -> Result<()>
+pub fn parse_profile<K>(kbd: &mut K, mut reader: impl BufRead, strict: bool) -> Result<()>
 where
     K: KeyboardApi,
 {
@@ -155,7 +155,13 @@ where
                 }
             }
 
-            _ => {} // Unknown or malformed command - silently skip
+            _ => {
+                if strict {
+                    return Err(anyhow!("unknown command: {trimmed}"));
+                } else {
+                    eprintln!("warning: unknown command: {trimmed}");
+                }
+            }
         }
 
         line.clear(); // reuse the same buffer
@@ -169,18 +175,18 @@ where
 }
 
 /// Load a profile from a file path.
-pub fn load_profile<K>(kbd: &mut K, path: impl AsRef<Path>) -> Result<()>
+pub fn load_profile<K>(kbd: &mut K, path: impl AsRef<Path>, strict: bool) -> Result<()>
 where
     K: KeyboardApi,
 {
     let file = File::open(path)?;
-    parse_profile(kbd, BufReader::new(file))
+    parse_profile(kbd, BufReader::new(file), strict)
 }
 
 /// Parse a profile from standard input.
-pub fn load_profile_stdin<K>(kbd: &mut K, stdin: StdinLock<'_>) -> Result<()>
+pub fn load_profile_stdin<K>(kbd: &mut K, stdin: StdinLock<'_>, strict: bool) -> Result<()>
 where
     K: KeyboardApi,
 {
-    parse_profile(kbd, stdin)
+    parse_profile(kbd, stdin, strict)
 }

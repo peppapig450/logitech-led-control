@@ -38,6 +38,10 @@ struct Cli {
     #[arg(long = "tuk", value_parser = parse_u8_arg)]
     protocol: Option<u8>,
 
+    /// Fail on unknown commands in profiles
+    #[arg(long)]
+    strict: bool,
+
     #[command(subcommand)]
     command: Commands,
 }
@@ -301,7 +305,7 @@ impl Commands {
                 opts.product_id,
                 opts.protocol,
                 serial.serial.as_deref(),
-                |kbd| profile::load_profile(kbd, path),
+                |kbd| profile::load_profile(kbd, path, opts.strict),
             ),
             Commands::PipeProfile { serial } => with_keyboard(
                 opts.vendor_id,
@@ -310,7 +314,7 @@ impl Commands {
                 serial.serial.as_deref(),
                 |kbd| {
                     let stdin = std::io::stdin();
-                    profile::load_profile_stdin(kbd, stdin.lock())
+                    profile::load_profile_stdin(kbd, stdin.lock(), opts.strict)
                 },
             ),
             Commands::Fx {
