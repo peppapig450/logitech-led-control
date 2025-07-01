@@ -311,3 +311,58 @@ pub fn parse_u16(val: &str) -> Option<u16> {
         .ok()
         .or_else(|| val.parse::<u16>().ok())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_color_valid() {
+        assert_eq!(
+            parse_color("#ff3366"),
+            Some(Color {
+                red: 0xff,
+                green: 0x33,
+                blue: 0x66
+            })
+        );
+        assert_eq!(
+            parse_color("80"),
+            Some(Color {
+                red: 0x80,
+                green: 0x80,
+                blue: 0x80
+            })
+        );
+    }
+
+    #[test]
+    fn parse_color_invalid() {
+        assert!((parse_color("xyz").is_none()))
+    }
+
+    #[test]
+    fn parse_key_alias_and_single() {
+        assert_eq!(parse_key("light"), Some(Key::Backlight));
+        assert_eq!(parse_key("A"), Some(Key::A));
+        assert_eq!(parse_key("5"), Some(Key::N5));
+    }
+
+    #[test]
+    fn parse_period_ms_second() {
+        assert_eq!(parse_period("250ms"), Some(Duration::from_millis(250)));
+        assert_eq!(parse_period("2s"), Some(Duration::from_secs(2)));
+    }
+
+    #[test]
+    fn parse_period_hex() {
+        assert_eq!(
+            parse_period("ff"),
+            Some(Duration::from_millis(u64::from(0xffu8) << 8))
+        );
+        assert_eq!(
+            parse_period("f"),
+            Some(Duration::from_millis(u64::from(0x0fu8) << 8))
+        )
+    }
+}
