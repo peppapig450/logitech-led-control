@@ -424,11 +424,14 @@ where
         model::set_supported_override(vec![(vid, pid, model)]);
     }
 
-    let mut kbd = Keyboard::open(vid, pid, serial)?;
-    let res = f(&mut kbd);
-    kbd.close().ok();
-    model::clear_supported_override(); // NOTE: move this into `kbd.close`?
-    res
+    let mut kbd = match Keyboard::open(vid, pid, serial) {
+        Ok(k) => k,
+        Err(e) => {
+            model::clear_supported_override();
+            return Err(e);
+        }
+    };
+    f(&mut kbd)
 }
 
 fn main() -> anyhow::Result<()> {

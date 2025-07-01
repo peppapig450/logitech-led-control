@@ -153,3 +153,10 @@ impl Keyboard {
         Ok(())
     }
 }
+
+impl Drop for Keyboard {
+    fn drop(&mut self) {
+        self.close().ok();
+        crate::keyboard::model::clear_supported_override();
+    }
+}
