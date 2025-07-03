@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand, ValueHint};
+use clap::{Args, Parser, Subcommand, ValueHint};
 use std::path::PathBuf;
 
 use keyboard::api::KeyboardApi;
@@ -56,6 +56,17 @@ struct Cli {
     command: Commands,
 }
 
+#[derive(Args, Debug)]
+#[group(required = true, multiple = false)]
+struct ColorTarget {
+    #[arg(short, long)]
+    key: Option<Key>,
+    #[arg(short, long)]
+    group: Option<KeyGroup>,
+    #[arg(short = 'A', long)]
+    all: bool,
+}
+
 #[derive(Subcommand, Debug)]
 enum Commands {
     /// List all connected Logitech HID devices
@@ -67,28 +78,11 @@ enum Commands {
     /// Commit any buffered changes
     Commit,
 
-    /// Set all keys to a color
-    SetAll {
-        #[arg(short = 'a', help = help::COLOR_HELP)]
-        color: Color,
-        #[arg(long)]
-        no_commit: bool,
-    },
-
-    /// Set a key group color
-    SetGroup {
-        #[arg(short = 'g')]
-        group: KeyGroup,
-        #[arg(help = help::COLOR_HELP)]
-        color: Color,
-        #[arg(long)]
-        no_commit: bool,
-    },
-
-    /// Set an individual key color
-    SetKey {
-        #[arg(short = 'k')]
-        key: Key,
+    /// Set key colors
+    #[command(name = "set")]
+    SetColor {
+        #[command(flatten)]
+        target: ColorTarget,
         #[arg(help = help::COLOR_HELP)]
         color: Color,
         #[arg(long)]
@@ -177,21 +171,8 @@ impl Commands {
                 opts.serial.as_deref(),
                 |kbd| kbd.commit(),
             ),
-            Commands::SetAll { color, no_commit } => with_keyboard(
-                opts.vendor_id,
-                opts.product_id,
-                opts.protocol,
-                opts.serial.as_deref(),
-                |kbd| {
-                    kbd.set_all_keys(*color)?;
-                    if !no_commit {
-                        kbd.commit()?;
-                    }
-                    Ok(())
-                },
-            ),
-            Commands::SetGroup {
-                group,
+            Commands::SetColor {
+                target,
                 color,
                 no_commit,
             } => with_keyboard(
@@ -200,28 +181,14 @@ impl Commands {
                 opts.protocol,
                 opts.serial.as_deref(),
                 |kbd| {
-                    kbd.set_group_keys(*group, *color)?;
-                    if !no_commit {
-                        kbd.commit()?;
+                    if target.all {
+                        kbd.set_all_keys(*color)?;
+                    } else if let Some(group) = target.group {
+                        kbd.set_group_keys(group, *color)?;
+                    } else if let Some(key) = target.key {
+                        kbd.set_keys(&[keyboard::KeyValue { key, color: *color }])?;
                     }
-                    Ok(())
-                },
-            ),
-            Commands::SetKey {
-                key,
-                color,
-                no_commit,
-            } => with_keyboard(
-                opts.vendor_id,
-                opts.product_id,
-                opts.protocol,
-                opts.serial.as_deref(),
-                |kbd| {
-                    kbd.set_keys(&[keyboard::KeyValue {
-                        key: *key,
-                        color: *color,
-                    }])?;
-                    if !no_commit {
+                    if !*no_commit {
                         kbd.commit()?;
                     }
                     Ok(())
