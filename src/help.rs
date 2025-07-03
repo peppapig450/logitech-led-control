@@ -115,3 +115,24 @@ pub fn print_samples_help() {
     println!("logitech-led-control -k logo ff0000\n    Set the logo key red");
     println!("logitech-led-control -a 00ff00\n    Set all keys green");
 }
+
+pub fn print_colors_help() {
+    const HELP: &str = r"Colors
+------
+black
+white
+red
+green
+blue
+yellow
+cyan
+magenta
+orange
+purple
+pink";
+
+    println!("{HELP}");
+}
+
+// If additional  strings of this nature are added they should be moved to their own module
+pub const COLOR_HELP: &str = "Color value as rrggbb, rr, or name (red, green, blue, white, black, yellow, cyan, magenta, orange, purple, pink)";

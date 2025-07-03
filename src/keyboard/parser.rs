@@ -29,30 +29,46 @@ fn ascii_lower<'a>(input: &'a str) -> Cow<'a, str> {
     }
 }
 
+/// Common color name -> RGB mapping (lowercase)
+static COLOR_NAMES: Map<&'static str, Color> = phf_map! {
+    "black"   => Color::new(0x00, 0x00, 0x00),
+    "white"   => Color::new(0xff, 0xff, 0xff),
+    "red"     => Color::new(0xff, 0x00, 0x00),
+    "green"   => Color::new(0x00, 0xff, 0x00),
+    "blue"    => Color::new(0x00, 0x00, 0xff),
+    "yellow"  => Color::new(0xff, 0xff, 0x00),
+    "cyan"    => Color::new(0x00, 0xff, 0xff),
+    "magenta" => Color::new(0xff, 0x00, 0xff),
+    "orange"  => Color::new(0xff, 0xa5, 0x00),
+    "purple"  => Color::new(0x80, 0x00, 0x80),
+    "pink"    => Color::new(0xff, 0xc0, 0xcb),
+};
+
 /// Parse a color in hexadecimal `rrggbb` form (optionally `rr` for G610).
 pub fn parse_color(val: &str) -> Option<Color> {
-    // Accept "rrggbb" or "rr" (G610 grayscale). Optional leading '#'.
-    let v = val.trim_start_matches('#');
+    // Accept  name, "rrggbb" or "rr" (G610 grayscale). Optional leading '#'.
+    let lower = ascii_lower(val);
+    let value = lower.trim_start_matches('#');
 
-    let bytes: [u8; 3] = match v.len() {
+    if let Some(&color) = COLOR_NAMES.get(value) {
+        return Some(color);
+    }
+
+    let bytes: [u8; 3] = match value.len() {
         6 => {
-            let r = u8::from_str_radix(&v[0..2], 16).ok()?;
-            let g = u8::from_str_radix(&v[2..4], 16).ok()?;
-            let b = u8::from_str_radix(&v[4..6], 16).ok()?;
+            let r = u8::from_str_radix(&value[0..2], 16).ok()?;
+            let g = u8::from_str_radix(&value[2..4], 16).ok()?;
+            let b = u8::from_str_radix(&value[4..6], 16).ok()?;
             [r, g, b]
         }
         2 => {
-            let byte = u8::from_str_radix(v, 16).ok()?;
+            let byte = u8::from_str_radix(value, 16).ok()?;
             [byte, byte, byte] // grey ramp: rr -> rr rr rr
         }
         _ => return None,
     };
 
-    Some(Color {
-        red: bytes[0],
-        green: bytes[1],
-        blue: bytes[2],
-    })
+    Some(Color::new(bytes[0], bytes[1], bytes[2]))
 }
 
 /// Parse a key group name.
@@ -318,27 +334,14 @@ mod tests {
 
     #[test]
     fn parse_color_valid() {
-        assert_eq!(
-            parse_color("#ff3366"),
-            Some(Color {
-                red: 0xff,
-                green: 0x33,
-                blue: 0x66
-            })
-        );
-        assert_eq!(
-            parse_color("80"),
-            Some(Color {
-                red: 0x80,
-                green: 0x80,
-                blue: 0x80
-            })
-        );
+        assert_eq!(parse_color("#ff3366"), Some(Color::new(0xff, 0x33, 0x66)));
+        assert_eq!(parse_color("80"), Some(Color::new(0x80, 0x80, 0x80)));
+        assert_eq!(parse_color("red"), Some(Color::new(0xff, 0x00, 0x00)))
     }
 
     #[test]
     fn parse_color_invalid() {
-        assert!((parse_color("xyz").is_none()))
+        assert!(parse_color("xyz").is_none())
     }
 
     #[test]

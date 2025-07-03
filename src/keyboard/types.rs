@@ -262,6 +262,12 @@ impl FromStr for Color {
     }
 }
 
+impl Color {
+    pub const fn new(red: u8, green: u8, blue: u8) -> Self {
+        Self { red, green, blue }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct KeyValue {
     pub key: Key,

@@ -73,7 +73,7 @@ enum Commands {
     SetAll {
         #[command(flatten)]
         serial: SerialArg,
-        #[arg(short = 'a')]
+        #[arg(short = 'a', help = help::COLOR_HELP)]
         color: Color,
         #[arg(long)]
         no_commit: bool,
@@ -85,6 +85,7 @@ enum Commands {
         serial: SerialArg,
         #[arg(short = 'g')]
         group: KeyGroup,
+        #[arg(help = help::COLOR_HELP)]
         color: Color,
         #[arg(long)]
         no_commit: bool,
@@ -96,6 +97,7 @@ enum Commands {
         serial: SerialArg,
         #[arg(short = 'k')]
         key: Key,
+        #[arg(help = help::COLOR_HELP)]
         color: Color,
         #[arg(long)]
         no_commit: bool,
@@ -107,6 +109,7 @@ enum Commands {
         serial: SerialArg,
         /// Region index
         region: u8,
+        #[arg(help = help::COLOR_HELP)]
         color: Color,
     },
 
@@ -153,7 +156,7 @@ enum Commands {
         part: NativeEffectPart,
         #[arg(long, value_parser = parse_period_arg)]
         period: Option<std::time::Duration>,
-        #[arg(long)]
+        #[arg(long, help = help::COLOR_HELP)]
         color: Option<Color>,
     },
 
@@ -165,7 +168,7 @@ enum Commands {
         part: NativeEffectPart,
         #[arg(long, value_parser = parse_period_arg)]
         period: Option<std::time::Duration>,
-        #[arg(long)]
+        #[arg(long, help = help::COLOR_HELP)]
         color: Option<Color>,
         storage: NativeEffectStorage,
     },
@@ -191,6 +194,10 @@ enum Commands {
     /// Display help for lighting effects
     #[command(name = "help-effects")]
     HelpEffects,
+
+    /// Display help for color names
+    #[command(name = "help-colors")]
+    HelpColors,
 
     /// Show usage samples
     #[command(name = "help-samples")]
@@ -380,6 +387,10 @@ impl Commands {
             }
             &Commands::HelpEffects => {
                 help::print_effects_help();
+                Ok(())
+            }
+            &Commands::HelpColors => {
+                help::print_colors_help();
                 Ok(())
             }
             &Commands::HelpSamples => {
