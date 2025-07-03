@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand, ValueHint};
+use clap::{Parser, Subcommand, ValueHint};
 use std::path::PathBuf;
 
 use keyboard::api::KeyboardApi;
@@ -23,15 +23,21 @@ use crate::{
 };
 
 // Control LEDS via HID
-#[derive(Parser)]
-#[command(author, version, about)]
+#[derive(Parser, Debug)]
+#[command(
+    author,
+    version,
+    about,
+    propagate_version = true,
+    arg_required_else_help = true
+)]
 struct Cli {
-    /// Device vendor ID (hex or decimal)
-    #[arg(long = "dv", value_parser = parse_u16_arg)]
+    /// Device vendor ID (hex or decimal)   [env: LOGI_VENDOR_ID=]
+    #[arg(long = "vendor-id", short = 'v', value_parser = parse_u16_arg)]
     vendor_id: Option<u16>,
 
-    /// Device product ID (hex or decimal)
-    #[arg(long = "dp", value_parser = parse_u16_arg)]
+    /// Device product ID (hex or decimal)  [env: LOGI_PRODUCT_ID=]
+    #[arg(long = "product-id", short = 'p', value_parser = parse_u16_arg)]
     product_id: Option<u16>,
 
     /// Test unsupported keyboard with a specific protocol (1-4)
@@ -39,40 +45,30 @@ struct Cli {
     protocol: Option<u8>,
 
     /// Fail on unknown commands in profiles
-    #[arg(long)]
+    #[arg(long, default_value_t = false, action)]
     strict: bool,
+
+    /// Device serial number
+    #[arg(long, global = true)]
+    serial: Option<String>,
 
     #[command(subcommand)]
     command: Commands,
 }
 
-#[derive(Args, Clone)]
-struct SerialArg {
-    #[arg(long)]
-    serial: Option<String>,
-}
-
-#[derive(Subcommand)]
+#[derive(Subcommand, Debug)]
 enum Commands {
     /// List all connected Logitech HID devices
     ListKeyboards,
 
     /// Open a specific keyboard and print its info
-    PrintDevice {
-        #[command(flatten)]
-        serial: SerialArg,
-    },
+    PrintDevice,
 
     /// Commit any buffered changes
-    Commit {
-        #[command(flatten)]
-        serial: SerialArg,
-    },
+    Commit,
 
     /// Set all keys to a color
     SetAll {
-        #[command(flatten)]
-        serial: SerialArg,
         #[arg(short = 'a', help = help::COLOR_HELP)]
         color: Color,
         #[arg(long)]
@@ -81,8 +77,6 @@ enum Commands {
 
     /// Set a key group color
     SetGroup {
-        #[command(flatten)]
-        serial: SerialArg,
         #[arg(short = 'g')]
         group: KeyGroup,
         #[arg(help = help::COLOR_HELP)]
@@ -93,8 +87,6 @@ enum Commands {
 
     /// Set an individual key color
     SetKey {
-        #[command(flatten)]
-        serial: SerialArg,
         #[arg(short = 'k')]
         key: Key,
         #[arg(help = help::COLOR_HELP)]
@@ -105,8 +97,6 @@ enum Commands {
 
     /// Set a region color
     SetRegion {
-        #[command(flatten)]
-        serial: SerialArg,
         /// Region index
         region: u8,
         #[arg(help = help::COLOR_HELP)]
@@ -114,44 +104,25 @@ enum Commands {
     },
 
     /// Set the MR key value
-    SetMr {
-        #[command(flatten)]
-        serial: SerialArg,
-        value: u8,
-    },
+    SetMr { value: u8 },
 
     /// Set the Mn key value
-    SetMn {
-        #[command(flatten)]
-        serial: SerialArg,
-        value: u8,
-    },
+    SetMn { value: u8 },
 
     /// Set the G-keys mode
-    GKeysMode {
-        #[command(flatten)]
-        serial: SerialArg,
-        value: u8,
-    },
+    GKeysMode { value: u8 },
 
     /// Load profile from a file
     LoadProfile {
-        #[command(flatten)]
-        serial: SerialArg,
         #[arg(value_hint = ValueHint::FilePath)]
         path: PathBuf,
     },
 
     /// Load profile from stdin
-    PipeProfile {
-        #[command(flatten)]
-        serial: SerialArg,
-    },
+    PipeProfile,
 
     /// Apply a lighting effect
     Fx {
-        #[command(flatten)]
-        serial: SerialArg,
         effect: NativeEffect,
         part: NativeEffectPart,
         #[arg(long, value_parser = parse_period_arg)]
@@ -162,8 +133,6 @@ enum Commands {
 
     /// Store a lighting effect in memory
     FxStore {
-        #[command(flatten)]
-        serial: SerialArg,
         effect: NativeEffect,
         part: NativeEffectPart,
         #[arg(long, value_parser = parse_period_arg)]
@@ -174,18 +143,10 @@ enum Commands {
     },
 
     /// Configure startup mode
-    StartupMode {
-        #[command(flatten)]
-        serial: SerialArg,
-        mode: StartupMode,
-    },
+    StartupMode { mode: StartupMode },
 
     /// Configure on-board mode
-    OnBoardMode {
-        #[command(flatten)]
-        serial: SerialArg,
-        mode: OnBoardMode,
-    },
+    OnBoardMode { mode: OnBoardMode },
 
     /// Display help for keys
     #[command(name = "help-keys")]
@@ -208,23 +169,19 @@ impl Commands {
     fn run(&self, opts: &Cli) -> anyhow::Result<()> {
         match self {
             Commands::ListKeyboards => list_keyboards(),
-            Commands::PrintDevice { serial } => print_device(serial.serial.as_deref()),
-            Commands::Commit { serial } => with_keyboard(
+            Commands::PrintDevice => print_device(opts.serial.as_deref()),
+            Commands::Commit => with_keyboard(
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| kbd.commit(),
             ),
-            Commands::SetAll {
-                serial,
-                color,
-                no_commit,
-            } => with_keyboard(
+            Commands::SetAll { color, no_commit } => with_keyboard(
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| {
                     kbd.set_all_keys(*color)?;
                     if !no_commit {
@@ -234,7 +191,6 @@ impl Commands {
                 },
             ),
             Commands::SetGroup {
-                serial,
                 group,
                 color,
                 no_commit,
@@ -242,7 +198,7 @@ impl Commands {
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| {
                     kbd.set_group_keys(*group, *color)?;
                     if !no_commit {
@@ -252,7 +208,6 @@ impl Commands {
                 },
             ),
             Commands::SetKey {
-                serial,
                 key,
                 color,
                 no_commit,
@@ -260,7 +215,7 @@ impl Commands {
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| {
                     kbd.set_keys(&[keyboard::KeyValue {
                         key: *key,
@@ -272,60 +227,55 @@ impl Commands {
                     Ok(())
                 },
             ),
-            Commands::SetRegion {
-                serial,
-                region,
-                color,
-            } => with_keyboard(
+            Commands::SetRegion { region, color } => with_keyboard(
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| {
                     kbd.set_region(*region, *color)?;
                     Ok(())
                 },
             ),
-            Commands::SetMr { serial, value } => with_keyboard(
+            Commands::SetMr { value } => with_keyboard(
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| kbd.set_mr_key(*value),
             ),
-            Commands::SetMn { serial, value } => with_keyboard(
+            Commands::SetMn { value } => with_keyboard(
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| kbd.set_mn_key(*value),
             ),
-            Commands::GKeysMode { serial, value } => with_keyboard(
+            Commands::GKeysMode { value } => with_keyboard(
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| kbd.set_gkeys_mode(*value),
             ),
-            Commands::LoadProfile { serial, path } => with_keyboard(
+            Commands::LoadProfile { path } => with_keyboard(
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| profile::load_profile(kbd, path, opts.strict),
             ),
-            Commands::PipeProfile { serial } => with_keyboard(
+            Commands::PipeProfile => with_keyboard(
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| {
                     let stdin = std::io::stdin();
                     profile::load_profile_stdin(kbd, stdin.lock(), opts.strict)
                 },
             ),
             Commands::Fx {
-                serial,
                 effect,
                 part,
                 period,
@@ -334,7 +284,7 @@ impl Commands {
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| {
                     kbd.set_fx(
                         *effect,
@@ -346,7 +296,6 @@ impl Commands {
                 },
             ),
             Commands::FxStore {
-                serial,
                 effect,
                 part,
                 period,
@@ -356,7 +305,7 @@ impl Commands {
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| {
                     kbd.set_fx(
                         *effect,
@@ -367,18 +316,18 @@ impl Commands {
                     )
                 },
             ),
-            Commands::StartupMode { serial, mode } => with_keyboard(
+            Commands::StartupMode { mode } => with_keyboard(
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| kbd.set_startup_mode(*mode),
             ),
-            Commands::OnBoardMode { serial, mode } => with_keyboard(
+            Commands::OnBoardMode { mode } => with_keyboard(
                 opts.vendor_id,
                 opts.product_id,
                 opts.protocol,
-                serial.serial.as_deref(),
+                opts.serial.as_deref(),
                 |kbd| kbd.set_on_board_mode(*mode),
             ),
             Commands::HelpKeys => {
