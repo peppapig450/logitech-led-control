@@ -158,9 +158,8 @@ where
             _ => {
                 if strict {
                     return Err(anyhow!("unknown command: {trimmed}"));
-                } else {
-                    eprintln!("warning: unknown command: {trimmed}");
                 }
+                eprintln!("warning: unknown command: {trimmed}");
             }
         }
 
