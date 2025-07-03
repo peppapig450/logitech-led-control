@@ -30,20 +30,20 @@ cargo build --features libusb
 List all connected keyboards:
 
 ```bash
-logitech-led-control list-keyboards
+logi-led list-keyboards
 ```
 
 Set all keys to red without committing immediately:
 
 ```bash
-logitech-led-control set-all --color ff0000 --no-commit
+logi-led set-all --color ff0000 --no-commit
 ```
 
 Display available key names and effect descriptions:
 
 ```bash
-logitech-led-control help-keys
-logitech-led-control help-effects
+logi-led help-keys
+logi-led help-effects
 ```
 
 ## License

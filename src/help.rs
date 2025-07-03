@@ -111,9 +111,9 @@ pub fn print_effects_help() {
 
 pub fn print_samples_help() {
     println!("Samples\n-------\n");
-    println!("logitech-led-control -p profile.txt\n    Load a profile from a file");
-    println!("logitech-led-control -k logo ff0000\n    Set the logo key red");
-    println!("logitech-led-control -a 00ff00\n    Set all keys green");
+    println!("logi-led -p profile.txt\n    Load a profile from a file");
+    println!("logi-led -k logo ff0000\n    Set the logo key red");
+    println!("logi-led -a 00ff00\n    Set all keys green");
 }
 
 pub fn print_colors_help() {

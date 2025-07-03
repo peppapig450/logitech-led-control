@@ -1,5 +1,5 @@
 [package]
-name = "logitech-led-control"
+name = "logi-led"
 version = "0.1.0"
 edition = "2024"
 
