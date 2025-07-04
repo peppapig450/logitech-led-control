@@ -207,7 +207,7 @@ pub fn native_effect_packet(
         | KeyboardModel::GPro => (0x0d, 0x3c),
         KeyboardModel::G815 => (0x0f, 0x1c),
         KeyboardModel::G910 => (0x10, 0x3c),
-        _ => return None,
+        KeyboardModel::Unknown => return None,
     };
 
     let per_ms: u16 = period.as_millis().try_into().unwrap_or(u16::MAX);

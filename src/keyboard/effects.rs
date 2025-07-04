@@ -129,10 +129,10 @@ pub fn native_effect_packets(
                         }
                         NativeEffect::Waves | NativeEffect::Cycle => 0x02,
                         NativeEffect::Ripple | NativeEffect::Off => 0x00,
-                        _ => 0x01,
+                        NativeEffect::Color => 0x01,
                     };
                 }
-                _ => {}
+                NativeEffectPart::All => {}
             }
         }
 
