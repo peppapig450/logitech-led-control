@@ -224,7 +224,7 @@ mod tests {
 
         handle.release_interface(1).unwrap();
         if driver_active {
-            handle.attach_kernel_driver(1).unwrap()
+            handle.attach_kernel_driver(1).unwrap();
         }
 
         assert!(handle.detach_called);

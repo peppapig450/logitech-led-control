@@ -342,12 +342,12 @@ mod tests {
     fn parse_color_valid() {
         assert_eq!(parse_color("#ff3366"), Some(Color::new(0xff, 0x33, 0x66)));
         assert_eq!(parse_color("80"), Some(Color::new(0x80, 0x80, 0x80)));
-        assert_eq!(parse_color("red"), Some(Color::new(0xff, 0x00, 0x00)))
+        assert_eq!(parse_color("red"), Some(Color::new(0xff, 0x00, 0x00)));
     }
 
     #[test]
     fn parse_color_invalid() {
-        assert!(parse_color("xyz").is_none())
+        assert!(parse_color("xyz").is_none());
     }
 
     #[test]
@@ -372,7 +372,7 @@ mod tests {
         assert_eq!(
             parse_period("f"),
             Some(Duration::from_millis(u64::from(0x0fu8) << 8))
-        )
+        );
     }
 
     #[test]
