@@ -99,7 +99,8 @@ impl Keyboard {
         let handle = device_handle.ok_or_else(|| anyhow!("no matching device"))?;
         let info = selected.unwrap();
 
-        if handle.kernel_driver_active(1).unwrap_or(false) {
+        let driver_active = handle.kernel_driver_active(1).unwrap_or(false);
+        if driver_active {
             handle.detach_kernel_driver(1).ok();
         }
         if let Err(e) = handle.claim_interface(1) {
@@ -109,7 +110,7 @@ impl Keyboard {
             _ctx: ctx,
             handle: Some(handle),
             current: Some(info),
-            kernel_detached: true,
+            kernel_detached: driver_active,
         })
     }
 
@@ -158,5 +159,94 @@ impl Drop for Keyboard {
     fn drop(&mut self) {
         self.close().ok();
         crate::keyboard::model::clear_supported_override();
+    }
+}
+
+#[cfg(all(test, feature = "libusb"))]
+mod tests {
+    use super::*;
+
+    struct StubHandle {
+        active: bool,
+        detach_called: bool,
+        attach_called: bool,
+        claim_called: bool,
+        release_called: bool,
+    }
+
+    impl StubHandle {
+        fn new(active: bool) -> Self {
+            Self {
+                active,
+                detach_called: false,
+                attach_called: false,
+                claim_called: false,
+                release_called: false,
+            }
+        }
+    }
+
+    impl StubHandle {
+        fn kernel_driver_active(&self, _iface: u8) -> rusb::Result<bool> {
+            Ok(self.active)
+        }
+
+        fn detach_kernel_driver(&mut self, _iface: u8) -> rusb::Result<()> {
+            self.detach_called = true;
+            Ok(())
+        }
+
+        fn attach_kernel_driver(&mut self, _iface: u8) -> rusb::Result<()> {
+            self.attach_called = true;
+            Ok(())
+        }
+
+        fn claim_interface(&mut self, _iface: u8) -> rusb::Result<()> {
+            self.claim_called = true;
+            Ok(())
+        }
+
+        fn release_interface(&mut self, _iface: u8) -> rusb::Result<()> {
+            self.release_called = true;
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn detach_and_reattach_when_active() {
+        let mut handle = StubHandle::new(true);
+
+        let driver_active = handle.kernel_driver_active(1).unwrap_or(false);
+        if driver_active {
+            handle.detach_kernel_driver(1).ok();
+        }
+        handle.claim_interface(1).unwrap();
+
+        handle.release_interface(1).unwrap();
+        if driver_active {
+            handle.attach_kernel_driver(1).unwrap()
+        }
+
+        assert!(handle.detach_called);
+        assert!(handle.attach_called);
+    }
+
+    #[test]
+    fn no_detach_when_not_active() {
+        let mut handle = StubHandle::new(false);
+
+        let driver_active = handle.kernel_driver_active(1).unwrap_or(false);
+        if driver_active {
+            handle.detach_kernel_driver(1).ok();
+        }
+        handle.claim_interface(1).unwrap();
+
+        handle.release_interface(1).unwrap();
+        if driver_active {
+            handle.attach_kernel_driver(1).unwrap();
+        }
+
+        assert!(!handle.detach_called);
+        assert!(!handle.attach_called);
     }
 }
