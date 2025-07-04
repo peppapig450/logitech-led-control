@@ -172,7 +172,7 @@ impl Commands {
                 opts.product_id,
                 opts.protocol,
                 opts.serial.as_deref(),
-                |kbd| kbd.commit(),
+                keyboard::api::KeyboardApi::commit,
             ),
             Commands::SetColor {
                 target,

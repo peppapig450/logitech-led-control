@@ -1,14 +1,15 @@
 use super::common::{DeviceInfo, KeyboardModel, lookup_model};
 use anyhow::{Result, anyhow};
 use hidapi::{HidApi, HidDevice};
+use std::borrow::ToOwned;
 
 fn to_device_info_hid(dev: &hidapi::DeviceInfo) -> DeviceInfo {
     DeviceInfo {
         vendor_id: dev.vendor_id(),
         product_id: dev.product_id(),
-        manufacturer: dev.manufacturer_string().map(|s| s.to_owned()),
-        product: dev.product_string().map(|s| s.to_owned()),
-        serial_number: dev.serial_number().map(|s| s.to_owned()),
+        manufacturer: dev.manufacturer_string().map(ToOwned::to_owned),
+        product: dev.product_string().map(ToOwned::to_owned),
+        serial_number: dev.serial_number().map(ToOwned::to_owned),
         model: lookup_model(dev.vendor_id(), dev.product_id()),
     }
 }
