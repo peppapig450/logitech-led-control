@@ -153,7 +153,7 @@ pub fn native_effect_packets(
                     CYAN,
                     storage,
                 );
-            };
+            }
         }
     }
 
