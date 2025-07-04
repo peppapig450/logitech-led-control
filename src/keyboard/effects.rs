@@ -38,7 +38,7 @@ pub enum NativeEffect {
 
 impl NativeEffect {
     /// Extract the high-byte **group** for quick pattern matches
-    #[inline(always)]
+    #[inline]
     const fn group(self) -> NativeEffectGroup {
         // Safety: the first 8 bits of every `NativeEffect` encode its group.
         unsafe { core::mem::transmute::<u8, NativeEffectGroup>((self as u16 >> 8) as u8) }
