@@ -1,4 +1,4 @@
-use super::common::*;
+use super::common::{DeviceInfo, KeyboardModel, lookup_model};
 use anyhow::{Result, anyhow};
 use hidapi::{HidApi, HidDevice};
 

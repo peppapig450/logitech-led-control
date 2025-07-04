@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use super::common::*;
+use super::common::{DeviceInfo, KeyboardModel, lookup_model};
 use anyhow::{Result, anyhow};
 use rusb::{
     self, Context, DeviceHandle, Direction, Recipient, RequestType, UsbContext, request_type,
