@@ -61,7 +61,7 @@ impl Keyboard {
         Ok(list)
     }
 
-    /// Open a keyboard. If vendor_id or product_id are 0 they are ignored.
+    /// Open a keyboard. If `vendor_id` or `product_id` are 0 they are ignored.
     pub fn open(vendor_id: u16, product_id: u16, serial: Option<&str>) -> Result<Self> {
         let ctx = rusb::Context::new()?;
         let mut selected = None;
@@ -132,7 +132,7 @@ impl Keyboard {
 
     /// Send a raw HID output report to the keyboard using a USB control transfer.
     ///
-    /// This uses the HID class-specific **SET_REPORT (0x09)** request with:
+    /// This uses the HID class-specific **`SET_REPORT` (0x09)** request with:
     /// - **wValue** = (`report_type` << 8) \| `report_id`
     /// - `report_type` = **0x02** (*Output Report*)
     /// - `report_id` = **0x12** if `data.len() > 20`, else **0x11**

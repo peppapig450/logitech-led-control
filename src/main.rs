@@ -32,11 +32,11 @@ use crate::{
     arg_required_else_help = true
 )]
 struct Cli {
-    /// Device vendor ID (hex or decimal)   [env: LOGI_VENDOR_ID=]
+    /// Device vendor ID (hex or decimal)   [env: `LOGI_VENDOR_ID`=]
     #[arg(long = "vendor-id", short = 'v', value_parser = parse_u16_arg)]
     vendor_id: Option<u16>,
 
-    /// Device product ID (hex or decimal)  [env: LOGI_PRODUCT_ID=]
+    /// Device product ID (hex or decimal)  [env: `LOGI_PRODUCT_ID`=]
     #[arg(long = "product-id", short = 'p', value_parser = parse_u16_arg)]
     product_id: Option<u16>,
 

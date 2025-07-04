@@ -31,7 +31,7 @@ impl Keyboard {
         Ok(devices)
     }
 
-    /// Open a keyboard. If vendor_id or product_id are 0 they are ignored.
+    /// Open a keyboard. If `vendor_id` or `product_id` are 0 they are ignored.
     pub fn open(vendor_id: u16, product_id: u16, serial: Option<&str>) -> Result<Self> {
         let api = HidApi::new()?;
         let devices = api
