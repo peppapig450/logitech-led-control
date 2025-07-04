@@ -4,7 +4,7 @@ use crate::keyboard::device::Keyboard;
 
 /// Try to open a device by serial (or pick the first one) and print its details
 pub fn print_device(serial: Option<&str>) -> Result<()> {
-    let mut kbd = Keyboard::open(0, 0, serial)?;
+    let kbd = Keyboard::open(0, 0, serial)?;
 
     if let Some(info) = kbd.current_device() {
         println!("Opened device:");
@@ -21,6 +21,5 @@ pub fn print_device(serial: Option<&str>) -> Result<()> {
         println!("  Serial: {:?}", info.serial_number);
     }
 
-    kbd.close()?;
     Ok(())
 }

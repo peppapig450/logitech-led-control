@@ -19,7 +19,7 @@ pub fn parse_board_mode(s: &str) -> Option<OnBoardMode> {
 
 /// Cheap ASCII lowercase without always heap-allocating
 #[inline]
-fn ascii_lower<'a>(input: &'a str) -> Cow<'a, str> {
+fn ascii_lower(input: &str) -> Cow<'_, str> {
     if input.bytes().all(|byte| !byte.is_ascii_uppercase()) {
         // Already lowercase - avoid allocation
         Cow::Borrowed(input)
@@ -251,7 +251,7 @@ pub fn parse_key(s: &str) -> Option<Key> {
     // single-character fallback; a-z, 0-9
     if lower.len() == 1 {
         return Some(match lower.as_bytes()[0] {
-            b'a'..=b'z' => Key::try_from((lower.as_bytes()[0] - b'a') as u16).ok()?, // uses repr order
+            b'a'..=b'z' => Key::try_from(u16::from(lower.as_bytes()[0] - b'a')).ok()?, // uses repr order
             b'0' => Key::N0,
             b'1' => Key::N1,
             b'2' => Key::N2,
@@ -342,12 +342,12 @@ mod tests {
     fn parse_color_valid() {
         assert_eq!(parse_color("#ff3366"), Some(Color::new(0xff, 0x33, 0x66)));
         assert_eq!(parse_color("80"), Some(Color::new(0x80, 0x80, 0x80)));
-        assert_eq!(parse_color("red"), Some(Color::new(0xff, 0x00, 0x00)))
+        assert_eq!(parse_color("red"), Some(Color::new(0xff, 0x00, 0x00)));
     }
 
     #[test]
     fn parse_color_invalid() {
-        assert!(parse_color("xyz").is_none())
+        assert!(parse_color("xyz").is_none());
     }
 
     #[test]
@@ -372,7 +372,7 @@ mod tests {
         assert_eq!(
             parse_period("f"),
             Some(Duration::from_millis(u64::from(0x0fu8) << 8))
-        )
+        );
     }
 
     #[test]

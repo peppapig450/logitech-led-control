@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use super::common::*;
+use super::common::{DeviceInfo, KeyboardModel, lookup_model};
 use anyhow::{Result, anyhow};
 use rusb::{
     self, Context, DeviceHandle, Direction, Recipient, RequestType, UsbContext, request_type,
@@ -61,7 +61,7 @@ impl Keyboard {
         Ok(list)
     }
 
-    /// Open a keyboard. If vendor_id or product_id are 0 they are ignored.
+    /// Open a keyboard. If `vendor_id` or `product_id` are 0 they are ignored.
     pub fn open(vendor_id: u16, product_id: u16, serial: Option<&str>) -> Result<Self> {
         let ctx = rusb::Context::new()?;
         let mut selected = None;
@@ -80,12 +80,7 @@ impl Keyboard {
             if let Ok(mut handle) = device.open() {
                 let info = to_device_info(&mut handle, &desc);
                 if let Some(sn) = serial {
-                    if info
-                        .serial_number
-                        .as_ref()
-                        .map(|s| s == sn)
-                        .unwrap_or(false)
-                    {
+                    if info.serial_number.as_ref().is_some_and(|s| s == sn) {
                         selected = Some(info);
                         device_handle = Some(handle);
                         break;
@@ -115,14 +110,13 @@ impl Keyboard {
     }
 
     /// Close the currently open keyboard handle.
-    pub fn close(&mut self) -> Result<()> {
+    pub fn close(&mut self) {
         if let Some(h) = self.handle.take() {
             h.release_interface(1).ok();
             if self.kernel_detached {
                 h.attach_kernel_driver(1).ok();
             }
         }
-        Ok(())
     }
 
     /// Get information about the currently opened device.
@@ -132,7 +126,7 @@ impl Keyboard {
 
     /// Send a raw HID output report to the keyboard using a USB control transfer.
     ///
-    /// This uses the HID class-specific **SET_REPORT (0x09)** request with:
+    /// This uses the HID class-specific **`SET_REPORT` (0x09)** request with:
     /// - **wValue** = (`report_type` << 8) \| `report_id`
     /// - `report_type` = **0x02** (*Output Report*)
     /// - `report_id` = **0x12** if `data.len() > 20`, else **0x11**
@@ -157,7 +151,7 @@ impl Keyboard {
 
 impl Drop for Keyboard {
     fn drop(&mut self) {
-        self.close().ok();
+        self.close();
         crate::keyboard::model::clear_supported_override();
     }
 }
@@ -166,6 +160,7 @@ impl Drop for Keyboard {
 mod tests {
     use super::*;
 
+    #[allow(clippy::struct_excessive_bools)]
     struct StubHandle {
         active: bool,
         detach_called: bool,
@@ -187,28 +182,24 @@ mod tests {
     }
 
     impl StubHandle {
-        fn kernel_driver_active(&self, _iface: u8) -> rusb::Result<bool> {
-            Ok(self.active)
+        fn kernel_driver_active(&self, _iface: u8) -> bool {
+            self.active
         }
 
-        fn detach_kernel_driver(&mut self, _iface: u8) -> rusb::Result<()> {
+        fn detach_kernel_driver(&mut self, _iface: u8) {
             self.detach_called = true;
-            Ok(())
         }
 
-        fn attach_kernel_driver(&mut self, _iface: u8) -> rusb::Result<()> {
+        fn attach_kernel_driver(&mut self, _iface: u8) {
             self.attach_called = true;
-            Ok(())
         }
 
-        fn claim_interface(&mut self, _iface: u8) -> rusb::Result<()> {
+        fn claim_interface(&mut self, _iface: u8) {
             self.claim_called = true;
-            Ok(())
         }
 
-        fn release_interface(&mut self, _iface: u8) -> rusb::Result<()> {
+        fn release_interface(&mut self, _iface: u8) {
             self.release_called = true;
-            Ok(())
         }
     }
 
@@ -216,15 +207,15 @@ mod tests {
     fn detach_and_reattach_when_active() {
         let mut handle = StubHandle::new(true);
 
-        let driver_active = handle.kernel_driver_active(1).unwrap_or(false);
+        let driver_active = handle.kernel_driver_active(1);
         if driver_active {
-            handle.detach_kernel_driver(1).ok();
+            handle.detach_kernel_driver(1);
         }
-        handle.claim_interface(1).unwrap();
+        handle.claim_interface(1);
 
-        handle.release_interface(1).unwrap();
+        handle.release_interface(1);
         if driver_active {
-            handle.attach_kernel_driver(1).unwrap()
+            handle.attach_kernel_driver(1);
         }
 
         assert!(handle.detach_called);
@@ -235,15 +226,15 @@ mod tests {
     fn no_detach_when_not_active() {
         let mut handle = StubHandle::new(false);
 
-        let driver_active = handle.kernel_driver_active(1).unwrap_or(false);
+        let driver_active = handle.kernel_driver_active(1);
         if driver_active {
-            handle.detach_kernel_driver(1).ok();
+            handle.detach_kernel_driver(1);
         }
-        handle.claim_interface(1).unwrap();
+        handle.claim_interface(1);
 
-        handle.release_interface(1).unwrap();
+        handle.release_interface(1);
         if driver_active {
-            handle.attach_kernel_driver(1).unwrap();
+            handle.attach_kernel_driver(1);
         }
 
         assert!(!handle.detach_called);

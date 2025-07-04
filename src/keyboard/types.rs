@@ -221,6 +221,16 @@ impl Key {
     pub const fn group(self) -> u8 {
         (self as u16 >> 8) as u8
     }
+
+    /// Low byte of the HID usage ID.
+    ///
+    /// This intentionally extracts only the HID usage byte from the two-byte
+    /// scan code discriminant.
+    #[inline]
+    #[allow(clippy::cast_possible_truncation)]
+    pub const fn hid_code(self) -> u8 {
+        (self as u16 & 0xff) as u8
+    }
 }
 
 impl fmt::Display for Key {

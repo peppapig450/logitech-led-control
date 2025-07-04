@@ -45,23 +45,18 @@ pub fn commit_packet(model: KeyboardModel) -> Option<Vec<u8>> {
 
 /// Raw HID header for a key group.
 fn group_address(model: KeyboardModel, group: u8) -> Option<Packet> {
-    use KeyboardModel::*;
+    use KeyboardModel::{G410, G512, G513, G610, G810, G815, G910, GPro};
 
     match (model, group) {
         // Same mapping for these boards
-        (G410 | G512 | G513 | GPro, 0) => Some(PKT_ADDR_0),
-        (G410 | G512 | G513 | GPro, 1) => Some(PKT_ADDR_1),
-        (G410 | G512 | G513 | GPro, 4) => Some(PKT_ADDR_4C),
-
-        (G610 | G810, 0) => Some(PKT_ADDR_0),
-        (G610 | G810, 1) => Some(PKT_ADDR_1),
+        (G410 | G512 | G513 | GPro | G610 | G810, 0) => Some(PKT_ADDR_0),
+        (G410 | G512 | G513 | GPro | G610 | G810 | G910, 1) => Some(PKT_ADDR_1),
+        (G410 | G512 | G513 | GPro | G610 | G810, 4) => Some(PKT_ADDR_4C),
         (G610 | G810, 2) => Some(PKT_ADDR_2),
-        (G610 | G810, 4) => Some(PKT_ADDR_4C),
 
         (G815, _) => Some(PKT_ADDR_G815),
 
         (G910, 0) => Some(PKT_ADDR_G910_0),
-        (G910, 1) => Some(PKT_ADDR_1),
         (G910, 3) => Some(PKT_ADDR_G910_3),
         (G910, 4) => Some(PKT_ADDR_4F),
 
@@ -71,7 +66,7 @@ fn group_address(model: KeyboardModel, group: u8) -> Option<Packet> {
 
 /// Translate a [`Key`] into the byte identifier used by the G815.
 fn g815_key_id(key: Key) -> Option<u8> {
-    let low = key as u16 as u8;
+    let low = key.hid_code();
 
     Some(match key {
         Key::Logo2
@@ -154,7 +149,7 @@ pub fn set_keys_packet(model: KeyboardModel, keys: &[KeyValue]) -> Option<Vec<u8
 
             for kv in keys.iter().take(max_keys) {
                 data.extend_from_slice(&[
-                    kv.key as u16 as u8,
+                    kv.key.hid_code(),
                     kv.color.red,
                     kv.color.green,
                     kv.color.blue,
@@ -212,10 +207,10 @@ pub fn native_effect_packet(
         | KeyboardModel::GPro => (0x0d, 0x3c),
         KeyboardModel::G815 => (0x0f, 0x1c),
         KeyboardModel::G910 => (0x10, 0x3c),
-        _ => return None,
+        KeyboardModel::Unknown => return None,
     };
 
-    let per_ms = period.as_millis() as u16;
+    let per_ms: u16 = period.as_millis().try_into().unwrap_or(u16::MAX);
     let effect_group = ((effect as u16) >> 8) as u8;
 
     let mut data = Vec::with_capacity(20);

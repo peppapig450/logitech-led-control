@@ -3,7 +3,7 @@
 ## Coding Conventions
 - Write idiomatic Rust targeting the edition specified in `Cargo.toml`.
 - Use `cargo fmt` for formatting. You may check formatting with `cargo fmt --all -- --check` and fix with `cargo fmt --all`.
-- Run `cargo clippy --all-targets -- -D warnings` and resolve all warnings before committing.
+- Run `cargo clippy --all-targets -- -D warnings -D clippy::pedantic -A clippy::too_many_lines` and resolve all warnings before committing.
 - Keep the code warnings free and prefer expressive types, clear error handling and small focused functions.
 
 ## Programmatic Checks
@@ -11,7 +11,7 @@ Run the following commands after every change:
 
 ```bash
 cargo fmt --all -- --check
-cargo clippy --all-targets -- -D warnings
+cargo clippy --all-targets -- -D warnings -D clippy::pedantic -A clippy::too_many_lines
 cargo test
 ```
 

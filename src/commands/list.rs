@@ -24,7 +24,7 @@ pub fn list_keyboards() -> Result<()> {
             dev.manufacturer.as_deref().unwrap_or_default(),
             dev.product.as_deref().unwrap_or_default(),
             dev.serial_number,
-        )
+        );
     }
 
     Ok(())

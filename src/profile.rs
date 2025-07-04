@@ -40,8 +40,7 @@ where
         for tok in trimmed.split_whitespace() {
             let cow = if let Some(var) = tok.strip_prefix('$') {
                 vars.get(var)
-                    .map(|v| Cow::Owned(v.clone()))
-                    .unwrap_or_else(|| Cow::Borrowed(tok))
+                    .map_or_else(|| Cow::Borrowed(tok), |v| Cow::Owned(v.clone()))
             } else {
                 Cow::Borrowed(tok)
             };

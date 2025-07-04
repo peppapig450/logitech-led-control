@@ -38,7 +38,7 @@ pub enum NativeEffect {
 
 impl NativeEffect {
     /// Extract the high-byte **group** for quick pattern matches
-    #[inline(always)]
+    #[inline]
     const fn group(self) -> NativeEffectGroup {
         // Safety: the first 8 bits of every `NativeEffect` encode its group.
         unsafe { core::mem::transmute::<u8, NativeEffectGroup>((self as u16 >> 8) as u8) }
@@ -129,10 +129,10 @@ pub fn native_effect_packets(
                         }
                         NativeEffect::Waves | NativeEffect::Cycle => 0x02,
                         NativeEffect::Ripple | NativeEffect::Off => 0x00,
-                        _ => 0x01,
+                        NativeEffect::Color => 0x01,
                     };
                 }
-                _ => {}
+                NativeEffectPart::All => {}
             }
         }
 
@@ -153,7 +153,7 @@ pub fn native_effect_packets(
                     CYAN,
                     storage,
                 );
-            };
+            }
         }
     }
 

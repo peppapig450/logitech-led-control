@@ -1,14 +1,15 @@
-use super::common::*;
+use super::common::{DeviceInfo, KeyboardModel, lookup_model};
 use anyhow::{Result, anyhow};
 use hidapi::{HidApi, HidDevice};
+use std::borrow::ToOwned;
 
 fn to_device_info_hid(dev: &hidapi::DeviceInfo) -> DeviceInfo {
     DeviceInfo {
         vendor_id: dev.vendor_id(),
         product_id: dev.product_id(),
-        manufacturer: dev.manufacturer_string().map(|s| s.to_owned()),
-        product: dev.product_string().map(|s| s.to_owned()),
-        serial_number: dev.serial_number().map(|s| s.to_owned()),
+        manufacturer: dev.manufacturer_string().map(ToOwned::to_owned),
+        product: dev.product_string().map(ToOwned::to_owned),
+        serial_number: dev.serial_number().map(ToOwned::to_owned),
         model: lookup_model(dev.vendor_id(), dev.product_id()),
     }
 }
@@ -31,7 +32,7 @@ impl Keyboard {
         Ok(devices)
     }
 
-    /// Open a keyboard. If vendor_id or product_id are 0 they are ignored.
+    /// Open a keyboard. If `vendor_id` or `product_id` are 0 they are ignored.
     pub fn open(vendor_id: u16, product_id: u16, serial: Option<&str>) -> Result<Self> {
         let api = HidApi::new()?;
         let devices = api
@@ -46,7 +47,7 @@ impl Keyboard {
         let dev_info = if let Some(sn) = serial {
             devices
                 .into_iter()
-                .find(|d| d.serial_number().map(|s| s == sn).unwrap_or(false))
+                .find(|d| d.serial_number().is_some_and(|s| s == sn))
         } else {
             devices.into_iter().next()
         }
@@ -62,11 +63,10 @@ impl Keyboard {
     }
 
     /// Close the currently open keyboard handle.
-    pub fn close(&mut self) -> Result<()> {
+    pub fn close(&mut self) {
         if let Some(dev) = self.device.take() {
             drop(dev);
         }
-        Ok(())
     }
 
     /// Get information about the currently opened device.
@@ -96,7 +96,7 @@ impl Keyboard {
 
 impl Drop for Keyboard {
     fn drop(&mut self) {
-        self.close().ok();
+        self.close();
         crate::keyboard::model::clear_supported_override();
     }
 }
