@@ -67,7 +67,7 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Run Clippy
-        run: cargo clippy --all-targets ${{ matrix.features }} -- -D warnings
+        run: cargo clippy --all-targets ${{ matrix.features }} -- -D warnings -D clippy::pedantic -A clippy::too_many_lines
 
   test:
     runs-on: ubuntu-latest
