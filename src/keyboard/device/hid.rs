@@ -62,11 +62,10 @@ impl Keyboard {
     }
 
     /// Close the currently open keyboard handle.
-    pub fn close(&mut self) -> Result<()> {
+    pub fn close(&mut self) {
         if let Some(dev) = self.device.take() {
             drop(dev);
         }
-        Ok(())
     }
 
     /// Get information about the currently opened device.
@@ -96,7 +95,7 @@ impl Keyboard {
 
 impl Drop for Keyboard {
     fn drop(&mut self) {
-        self.close().ok();
+        self.close();
         crate::keyboard::model::clear_supported_override();
     }
 }
