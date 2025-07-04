@@ -45,7 +45,7 @@ pub fn commit_packet(model: KeyboardModel) -> Option<Vec<u8>> {
 
 /// Raw HID header for a key group.
 fn group_address(model: KeyboardModel, group: u8) -> Option<Packet> {
-    use KeyboardModel::*;
+    use KeyboardModel::{G410, G512, G513, G610, G810, G815, G910, GPro};
 
     match (model, group) {
         // Same mapping for these boards
