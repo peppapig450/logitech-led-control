@@ -160,6 +160,7 @@ impl Drop for Keyboard {
 mod tests {
     use super::*;
 
+    #[allow(clippy::struct_excessive_bools)]
     struct StubHandle {
         active: bool,
         detach_called: bool,
