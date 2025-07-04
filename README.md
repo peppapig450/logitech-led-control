@@ -46,6 +46,14 @@ logi-led help-keys
 logi-led help-effects
 ```
 
+## Shell completions
+
+To generate shell completion scripts, run:
+
+```bash
+logi-led completion bash > /etc/bash_completion.d/logi-led
+```
+
 ## License
 
 Licensed under the terms of the GNU General Public License v3.0. See [`LICENSE`](LICENSE) for details.

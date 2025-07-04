@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand, ValueHint};
+use clap::{Args, CommandFactory, Parser, Subcommand, ValueHint};
 use std::path::PathBuf;
 
 use keyboard::api::KeyboardApi;
@@ -157,6 +157,9 @@ enum Commands {
     /// Show usage samples
     #[command(name = "help-samples")]
     HelpSamples,
+
+    /// Generate shell completion scripts
+    Completions { shell: clap_complete::Shell },
 }
 
 impl Commands {
@@ -311,6 +314,11 @@ impl Commands {
             }
             &Commands::HelpSamples => {
                 help::print_samples_help();
+                Ok(())
+            }
+            Commands::Completions { shell } => {
+                let mut cmd = Cli::command();
+                clap_complete::generate(*shell, &mut cmd, "logi-led", &mut std::io::stdout());
                 Ok(())
             }
         }
