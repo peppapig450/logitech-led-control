@@ -251,7 +251,7 @@ pub fn parse_key(s: &str) -> Option<Key> {
     // single-character fallback; a-z, 0-9
     if lower.len() == 1 {
         return Some(match lower.as_bytes()[0] {
-            b'a'..=b'z' => Key::try_from((lower.as_bytes()[0] - b'a') as u16).ok()?, // uses repr order
+            b'a'..=b'z' => Key::try_from(u16::from(lower.as_bytes()[0] - b'a')).ok()?, // uses repr order
             b'0' => Key::N0,
             b'1' => Key::N1,
             b'2' => Key::N2,

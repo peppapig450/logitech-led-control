@@ -66,7 +66,7 @@ fn group_address(model: KeyboardModel, group: u8) -> Option<Packet> {
 
 /// Translate a [`Key`] into the byte identifier used by the G815.
 fn g815_key_id(key: Key) -> Option<u8> {
-    let low = key as u16 as u8;
+    let low = key.hid_code();
 
     Some(match key {
         Key::Logo2
@@ -149,7 +149,7 @@ pub fn set_keys_packet(model: KeyboardModel, keys: &[KeyValue]) -> Option<Vec<u8
 
             for kv in keys.iter().take(max_keys) {
                 data.extend_from_slice(&[
-                    kv.key as u16 as u8,
+                    kv.key.hid_code(),
                     kv.color.red,
                     kv.color.green,
                     kv.color.blue,
@@ -210,7 +210,7 @@ pub fn native_effect_packet(
         _ => return None,
     };
 
-    let per_ms = period.as_millis() as u16;
+    let per_ms: u16 = period.as_millis().try_into().unwrap_or(u16::MAX);
     let effect_group = ((effect as u16) >> 8) as u8;
 
     let mut data = Vec::with_capacity(20);
