@@ -49,19 +49,14 @@ fn group_address(model: KeyboardModel, group: u8) -> Option<Packet> {
 
     match (model, group) {
         // Same mapping for these boards
-        (G410 | G512 | G513 | GPro, 0) => Some(PKT_ADDR_0),
-        (G410 | G512 | G513 | GPro, 1) => Some(PKT_ADDR_1),
-        (G410 | G512 | G513 | GPro, 4) => Some(PKT_ADDR_4C),
-
-        (G610 | G810, 0) => Some(PKT_ADDR_0),
-        (G610 | G810, 1) => Some(PKT_ADDR_1),
+        (G410 | G512 | G513 | GPro | G610 | G810, 0) => Some(PKT_ADDR_0),
+        (G410 | G512 | G513 | GPro | G610 | G810 | G910, 1) => Some(PKT_ADDR_1),
+        (G410 | G512 | G513 | GPro | G610 | G810, 4) => Some(PKT_ADDR_4C),
         (G610 | G810, 2) => Some(PKT_ADDR_2),
-        (G610 | G810, 4) => Some(PKT_ADDR_4C),
 
         (G815, _) => Some(PKT_ADDR_G815),
 
         (G910, 0) => Some(PKT_ADDR_G910_0),
-        (G910, 1) => Some(PKT_ADDR_1),
         (G910, 3) => Some(PKT_ADDR_G910_3),
         (G910, 4) => Some(PKT_ADDR_4F),
 
