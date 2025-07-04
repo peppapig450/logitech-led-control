@@ -316,16 +316,22 @@ pub fn parse_native_effect_storage(s: &str) -> Option<NativeEffectStorage> {
 
 /// Parse a u8 value from decimal or hexadecimal form.
 pub fn parse_u8(val: &str) -> Option<u8> {
-    u8::from_str_radix(val, 16)
-        .ok()
-        .or_else(|| val.parse::<u8>().ok())
+    if let Ok(num) = val.parse::<u8>() {
+        return Some(num);
+    }
+
+    let hex = val.strip_prefix("0x").unwrap_or(val);
+    u8::from_str_radix(hex, 16).ok()
 }
 
 /// Parse a u16 value from decimal or hexadecimal form
 pub fn parse_u16(val: &str) -> Option<u16> {
-    u16::from_str_radix(val, 16)
-        .ok()
-        .or_else(|| val.parse::<u16>().ok())
+    if let Ok(num) = val.parse::<u16>() {
+        return Some(num);
+    }
+
+    let hex = val.strip_prefix("0x").unwrap_or(val);
+    u16::from_str_radix(hex, 16).ok()
 }
 
 #[cfg(test)]
@@ -367,5 +373,11 @@ mod tests {
             parse_period("f"),
             Some(Duration::from_millis(u64::from(0x0fu8) << 8))
         )
+    }
+
+    #[test]
+    fn parse_u8_decimal_and_hex() {
+        assert_eq!(parse_u8("80"), Some(80));
+        assert_eq!(parse_u16("0xff"), Some(0xff));
     }
 }
