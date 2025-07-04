@@ -19,7 +19,7 @@ pub fn parse_board_mode(s: &str) -> Option<OnBoardMode> {
 
 /// Cheap ASCII lowercase without always heap-allocating
 #[inline]
-fn ascii_lower<'a>(input: &'a str) -> Cow<'a, str> {
+fn ascii_lower(input: &str) -> Cow<'_, str> {
     if input.bytes().all(|byte| !byte.is_ascii_uppercase()) {
         // Already lowercase - avoid allocation
         Cow::Borrowed(input)
