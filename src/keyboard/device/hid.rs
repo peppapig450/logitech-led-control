@@ -46,7 +46,7 @@ impl Keyboard {
         let dev_info = if let Some(sn) = serial {
             devices
                 .into_iter()
-                .find(|d| d.serial_number().map(|s| s == sn).unwrap_or(false))
+                .find(|d| d.serial_number().is_some_and(|s| s == sn))
         } else {
             devices.into_iter().next()
         }

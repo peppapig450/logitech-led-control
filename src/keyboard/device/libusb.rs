@@ -80,12 +80,7 @@ impl Keyboard {
             if let Ok(mut handle) = device.open() {
                 let info = to_device_info(&mut handle, &desc);
                 if let Some(sn) = serial {
-                    if info
-                        .serial_number
-                        .as_ref()
-                        .map(|s| s == sn)
-                        .unwrap_or(false)
-                    {
+                    if info.serial_number.as_ref().is_some_and(|s| s == sn) {
                         selected = Some(info);
                         device_handle = Some(handle);
                         break;
