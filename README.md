@@ -86,6 +86,10 @@ part = "keys"
 color = "ff00ff"
 ```
 
+## Acknowledgments
+
+This project draws inspiration from [g810-led](https://github.com/MatMoul/g810-led), which pioneered command-line control of Logitech G-series keyboard lighting. While `logi-led` is an independent Rust implementation, we appreciate the groundwork laid by the g810-led project and its contributors.
+
 ## License
 
 Licensed under the terms of the GNU General Public License v3.0. See [`LICENSE`](LICENSE) for details.
