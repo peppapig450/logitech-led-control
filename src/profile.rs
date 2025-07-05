@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use std::{
     borrow::Cow,
     collections::HashMap,
@@ -5,7 +6,6 @@ use std::{
     io::{BufRead, BufReader, StdinLock},
     path::Path,
 };
-use serde::Deserialize;
 
 use anyhow::{Result, anyhow};
 
@@ -238,6 +238,92 @@ where
     parse_profile(kbd, stdin, strict)
 }
 
+/// Load a TOML profile from a file path.
+pub fn load_toml_profile<K>(kbd: &mut K, path: impl AsRef<Path>) -> Result<()>
+where
+    K: KeyboardApi,
+{
+    let text = std::fs::read_to_string(path)?;
+    let profile: Profile = toml::from_str(&text)?;
+    apply_toml_profile(kbd, profile)
+}
+
+fn apply_toml_profile<K>(kbd: &mut K, profile: Profile) -> Result<()>
+where
+    K: KeyboardApi,
+{
+    if let Some(color) = profile.all.as_deref().and_then(parse_color) {
+        kbd.set_all_keys(color)?;
+    }
+
+    for entry in profile.groups {
+        if let (Some(group), Some(color)) =
+            (parse_key_group(&entry.group), parse_color(&entry.color))
+        {
+            kbd.set_group_keys(group, color)?;
+        }
+    }
+
+    let mut keys: Vec<KeyValue> = Vec::new();
+    for entry in profile.key {
+        if let (Some(key), Some(color)) = (parse_key(&entry.key), parse_color(&entry.color)) {
+            keys.push(KeyValue { key, color });
+        }
+    }
+    if !keys.is_empty() {
+        kbd.set_keys(&keys)?;
+    }
+
+    for entry in profile.regions {
+        if let (Some(region), Some(color)) = (parse_u8(&entry.region), parse_color(&entry.color)) {
+            kbd.set_region(region, color)?;
+        }
+    }
+
+    for fx in profile.effects {
+        if let (Some(effect), Some(part)) = (
+            parse_native_effect(&fx.effect),
+            parse_native_effect_part(&fx.part),
+        ) {
+            let period = fx
+                .period
+                .as_deref()
+                .and_then(parse_period)
+                .unwrap_or_default();
+            let color = fx
+                .color
+                .as_deref()
+                .and_then(parse_color)
+                .unwrap_or_default();
+            let storage = fx
+                .storage
+                .as_deref()
+                .and_then(parse_native_effect_storage)
+                .unwrap_or(NativeEffectStorage::None);
+            kbd.set_fx(effect, part, period, color, storage)?;
+        }
+    }
+
+    if let Some(val) = profile.mr {
+        kbd.set_mr_key(val)?;
+    }
+    if let Some(val) = profile.mn {
+        kbd.set_mn_key(val)?;
+    }
+    if let Some(val) = profile.gkeys_mode {
+        kbd.set_gkeys_mode(val)?;
+    }
+    if let Some(mode) = profile.startup_mode.as_deref().and_then(parse_startup_mode) {
+        kbd.set_startup_mode(mode)?;
+    }
+    if let Some(mode) = profile.on_board_mode.as_deref().and_then(parse_board_mode) {
+        kbd.set_on_board_mode(mode)?;
+    }
+
+    kbd.commit()?; // Maybe add a dry run mode for profiles as well
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -245,6 +331,8 @@ mod tests {
         Color, Key, KeyGroup, KeyValue, NativeEffect, NativeEffectPart, NativeEffectStorage,
         api::KeyboardApi,
     };
+    use std::fs::File;
+    use std::io::Write;
     use std::time::Duration;
 
     #[derive(Default)]
@@ -400,5 +488,95 @@ mod tests {
         let mut mock = MockKeyboard::default();
         let err = parse_profile(&mut mock, input.as_bytes(), true).unwrap_err();
         assert!(err.to_string().contains("unknown command"));
+    }
+
+    #[test]
+    fn apply_toml_profile_basic() {
+        let toml = r#"
+all = "010203"
+
+[[groups]]
+group = "arrows"
+color = "ff0000"
+
+[[key]]
+key = "a"
+color = "00ff00"
+
+[[regions]]
+region = "2"
+color = "0000ff"
+
+[[effects]]
+effect = "color"
+part = "keys"
+color = "ff00ff"
+"#;
+        let mut path = std::env::temp_dir();
+        path.push("test_profile.toml");
+        let mut file = File::create(&path).unwrap();
+        file.write_all(toml.as_bytes()).unwrap();
+
+        let mut mock = MockKeyboard::default();
+        load_toml_profile(&mut mock, &path).unwrap();
+        let _ = std::fs::remove_file(path);
+
+        assert_eq!(mock.commits, 1);
+        assert_eq!(
+            mock.all_calls,
+            vec![Color {
+                red: 1,
+                green: 2,
+                blue: 3,
+            }]
+        );
+        assert_eq!(
+            mock.group_calls,
+            vec![(
+                KeyGroup::Arrows,
+                Color {
+                    red: 0xff,
+                    green: 0x00,
+                    blue: 0x00,
+                },
+            )]
+        );
+        assert_eq!(mock.key_calls.len(), 1);
+        assert_eq!(
+            mock.key_calls[0],
+            vec![KeyValue {
+                key: Key::A,
+                color: Color {
+                    red: 0x00,
+                    green: 0xff,
+                    blue: 0x00,
+                },
+            }]
+        );
+        assert_eq!(
+            mock.region_calls,
+            vec![(
+                2,
+                Color {
+                    red: 0x00,
+                    green: 0x00,
+                    blue: 0xff,
+                },
+            )]
+        );
+        assert_eq!(mock.fx_calls.len(), 1);
+        let (eff, part, period, color, storage) = &mock.fx_calls[0];
+        assert_eq!(*eff, NativeEffect::Color);
+        assert_eq!(*part, NativeEffectPart::Keys);
+        assert_eq!(*period, Duration::from_millis(0));
+        assert_eq!(
+            *color,
+            Color {
+                red: 0xff,
+                green: 0x00,
+                blue: 0xff,
+            }
+        );
+        assert_eq!(*storage, NativeEffectStorage::None);
     }
 }
