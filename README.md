@@ -54,6 +54,38 @@ To generate shell completion scripts, run:
 logi-led completion bash > /etc/bash_completion.d/logi-led
 ```
 
+## Structured profiles
+
+Lighting setups can also be described with a structured TOML file.
+Use `load-config` to apply one:
+
+```bash
+logi-led load-config myprofile.toml
+```
+
+Example configuration:
+
+```toml
+all = "010203"
+
+[[groups]]
+group = "arrows"
+color = "ff0000"
+
+[[key]]
+key = "a"
+color = "00ff00"
+
+[[regions]]
+region = "2"
+color = "0000ff"
+
+[[effects]]
+effect = "color"
+part = "keys"
+color = "ff00ff"
+```
+
 ## License
 
 Licensed under the terms of the GNU General Public License v3.0. See [`LICENSE`](LICENSE) for details.
