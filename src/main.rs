@@ -112,6 +112,12 @@ enum Commands {
         path: PathBuf,
     },
 
+    /// Load a TOML configuration file
+    LoadConfig {
+        #[arg(value_hint = ValueHint::FilePath)]
+        path: PathBuf,
+    },
+
     /// Load profile from stdin
     PipeProfile,
 
@@ -234,6 +240,13 @@ impl Commands {
                 opts.protocol,
                 opts.serial.as_deref(),
                 |kbd| profile::load_profile(kbd, path, opts.strict),
+            ),
+            Commands::LoadConfig { path } => with_keyboard(
+                opts.vendor_id,
+                opts.product_id,
+                opts.protocol,
+                opts.serial.as_deref(),
+                |kbd| profile::load_toml_profile(kbd, path),
             ),
             Commands::PipeProfile => with_keyboard(
                 opts.vendor_id,
