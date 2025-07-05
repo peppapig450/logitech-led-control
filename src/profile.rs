@@ -5,6 +5,7 @@ use std::{
     io::{BufRead, BufReader, StdinLock},
     path::Path,
 };
+use serde::Deserialize;
 
 use anyhow::{Result, anyhow};
 
@@ -14,6 +15,54 @@ use crate::keyboard::parser::{
     parse_u8,
 };
 use crate::keyboard::{Color, KeyValue, NativeEffect, NativeEffectStorage, api::KeyboardApi};
+
+#[derive(Deserialize)]
+struct Profile {
+    all: Option<String>,
+    #[serde(default)]
+    groups: Vec<GroupEntry>,
+    #[serde(default)]
+    key: Vec<KeyEntry>,
+    #[serde(default)]
+    regions: Vec<RegionEntry>,
+    #[serde(default)]
+    effects: Vec<EffectEntry>,
+    mr: Option<u8>,
+    mn: Option<u8>,
+    gkeys_mode: Option<u8>,
+    startup_mode: Option<String>,
+    on_board_mode: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct GroupEntry {
+    group: String,
+    color: String,
+}
+
+#[derive(Deserialize)]
+struct KeyEntry {
+    key: String,
+    color: String,
+}
+
+#[derive(Deserialize)]
+struct RegionEntry {
+    region: String,
+    color: String,
+}
+
+#[derive(Deserialize)]
+struct EffectEntry {
+    effect: String,
+    part: String,
+    #[serde(default)]
+    period: Option<String>,
+    #[serde(default)]
+    color: Option<String>,
+    #[serde(default)]
+    storage: Option<String>,
+}
 
 /// Parse a profile from any buffered reader
 pub fn parse_profile<K>(kbd: &mut K, mut reader: impl BufRead, strict: bool) -> Result<()>
