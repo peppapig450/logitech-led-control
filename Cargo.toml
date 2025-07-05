@@ -18,6 +18,9 @@ strum = "0.27.1"
 strum_macros = "0.27.1"
 rusb = { version = "0.9.4", optional = true }
 clap_complete = "4.5.54"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+
 
 [features]
 default = []
