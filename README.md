@@ -9,6 +9,8 @@ A command-line utility written in Rust for controlling the lighting of supported
 - Apply and store native lighting effects.
 - Configure startup and onboard modes.
 - Load lighting profiles from files or standard input.
+- Drop-in compatible with profile files from [g810-led](g810-led/README.md).
+- Supports structured TOML configuration files.
 
 ## Building
 
@@ -53,6 +55,13 @@ To generate shell completion scripts, run:
 ```bash
 logi-led completion bash > /etc/bash_completion.d/logi-led
 ```
+
+## g810-led profiles
+
+Existing profiles from the [g810-led](g810-led/README.md) project work
+unchanged with `logi-led`. Use `load-profile` to load a profile from a file or
+`pipe-profile` to read one from standard input. Sample profiles can be found in
+the `g810-led/sample_profiles` directory.
 
 ## Structured profiles
 
