@@ -4,6 +4,7 @@ pub mod effects;
 pub mod model;
 pub mod packet;
 pub mod parser;
+pub mod spec;
 pub mod types;
 
 pub use effects::*;
