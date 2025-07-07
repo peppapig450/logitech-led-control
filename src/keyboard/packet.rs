@@ -13,55 +13,22 @@ fn pad(mut data: Vec<u8>, size: usize) -> Vec<u8> {
 /// Constant, model-independent byte slices
 type Packet = &'static [u8];
 
-const PKT_COMMIT_GX: Packet = &[0x11, 0xff, 0x0c, 0x5a]; // G410/G512/…
-const PKT_COMMIT_G815: Packet = &[0x11, 0xff, 0x10, 0x7f];
-const PKT_COMMIT_G910: Packet = &[0x11, 0xff, 0x0f, 0x5d];
-
-const PKT_ADDR_0: Packet = &[0x11, 0xff, 0x0c, 0x3a, 0x00, 0x10, 0x00, 0x01];
-const PKT_ADDR_1: Packet = &[0x12, 0xff, 0x0c, 0x3a, 0x00, 0x40, 0x00, 0x05];
-const PKT_ADDR_2: Packet = &[0x12, 0xff, 0x0c, 0x3a, 0x00, 0x02, 0x00, 0x05];
-const PKT_ADDR_4C: Packet = &[0x12, 0xff, 0x0c, 0x3a, 0x00, 0x01, 0x00, 0x0e];
-const PKT_ADDR_4F: Packet = &[0x12, 0xff, 0x0f, 0x3d, 0x00, 0x01, 0x00, 0x0e];
-const PKT_ADDR_G910_0: Packet = &[0x11, 0xff, 0x0f, 0x3a, 0x00, 0x10, 0x00, 0x02];
-const PKT_ADDR_G910_3: Packet = &[0x12, 0xff, 0x0f, 0x3e, 0x00, 0x04, 0x00, 0x09];
-const PKT_ADDR_G815: Packet = &[0x11, 0xff, 0x10, 0x1c];
-
 /// Packet used to commit changes to the device.
 pub fn commit_packet(model: KeyboardModel) -> Option<Vec<u8>> {
-    let slice = match model {
-        KeyboardModel::G410
-        | KeyboardModel::G512
-        | KeyboardModel::G513
-        | KeyboardModel::G610
-        | KeyboardModel::G810
-        | KeyboardModel::GPro => PKT_COMMIT_GX,
-        KeyboardModel::G815 => PKT_COMMIT_G815,
-        KeyboardModel::G910 => PKT_COMMIT_G910,
-        // G213/G413 are non transactional
-        _ => return None,
-    };
-    Some(pad(slice.to_vec(), 20))
+    model
+        .spec()
+        .commit
+        .map(|commit_bytes| pad(commit_bytes.to_vec(), 20))
 }
 
 /// Raw HID header for a key group.
 fn group_address(model: KeyboardModel, group: u8) -> Option<Packet> {
-    use KeyboardModel::{G410, G512, G513, G610, G810, G815, G910, GPro};
-
-    match (model, group) {
-        // Same mapping for these boards
-        (G410 | G512 | G513 | GPro | G610 | G810, 0) => Some(PKT_ADDR_0),
-        (G410 | G512 | G513 | GPro | G610 | G810 | G910, 1) => Some(PKT_ADDR_1),
-        (G410 | G512 | G513 | GPro | G610 | G810, 4) => Some(PKT_ADDR_4C),
-        (G610 | G810, 2) => Some(PKT_ADDR_2),
-
-        (G815, _) => Some(PKT_ADDR_G815),
-
-        (G910, 0) => Some(PKT_ADDR_G910_0),
-        (G910, 3) => Some(PKT_ADDR_G910_3),
-        (G910, 4) => Some(PKT_ADDR_4F),
-
-        _ => None,
-    }
+    model
+        .spec()
+        .group_addresses
+        .iter()
+        .find(|&&(test_group, _)| test_group == group)
+        .map(|&(_, packet)| packet)
 }
 
 /// Translate a [`Key`] into the byte identifier used by the G815.
@@ -122,7 +89,9 @@ pub fn set_keys_packet(model: KeyboardModel, keys: &[KeyValue]) -> Option<Vec<u8
             }
 
             let mut data = Vec::with_capacity(20);
-            data.extend_from_slice(&[0x11, 0xff, 0x10, 0x6c, color.red, color.green, color.blue]);
+            let header = model.spec().keys_header?;
+            data.extend_from_slice(header);
+            data.extend_from_slice(&[color.red, color.green, color.blue]);
 
             for kv in keys.iter().take(13) {
                 if let Some(id) = g815_key_id(kv.key) {
@@ -163,24 +132,11 @@ pub fn set_keys_packet(model: KeyboardModel, keys: &[KeyValue]) -> Option<Vec<u8
 
 /// Packet to set a region color (G213 only).
 pub fn region_packet(model: KeyboardModel, region: u8, color: Color) -> Option<Vec<u8>> {
-    if let KeyboardModel::G213 = model {
-        Some(pad(
-            vec![
-                0x11,
-                0xff,
-                0x0c,
-                0x3a,
-                region,
-                0x01,
-                color.red,
-                color.green,
-                color.blue,
-            ],
-            20,
-        ))
-    } else {
-        None
-    }
+    let header = model.spec().region_header?;
+    Some(pad(
+        [header, &[region, 0x01, color.red, color.green, color.blue]].concat(),
+        20,
+    ))
 }
 
 /// Packet for built-in lighting effects.
@@ -197,18 +153,7 @@ pub fn native_effect_packet(
         return None;
     }
 
-    let (p0, p1) = match model {
-        KeyboardModel::G213 | KeyboardModel::G413 => (0x0c, 0x3c),
-        KeyboardModel::G410
-        | KeyboardModel::G512
-        | KeyboardModel::G513
-        | KeyboardModel::G610
-        | KeyboardModel::G810
-        | KeyboardModel::GPro => (0x0d, 0x3c),
-        KeyboardModel::G815 => (0x0f, 0x1c),
-        KeyboardModel::G910 => (0x10, 0x3c),
-        KeyboardModel::Unknown => return None,
-    };
+    let (p0, p1) = model.spec().effect_params?;
 
     let per_ms: u16 = period.as_millis().try_into().unwrap_or(u16::MAX);
     let effect_group = ((effect as u16) >> 8) as u8;
