@@ -160,14 +160,14 @@ impl KeyboardApi for crate::keyboard::device::Keyboard {
             .ok_or_else(|| anyhow!("no device open"))?
             .model;
 
-        let packet: Option<Vec<u8>> = match model {
-            KeyboardModel::G815 if matches!(value, 0x00 | 0x01) => {
-                Some(vec![0x11, 0xff, 0x0c, 0x0c, value])
-            }
-            KeyboardModel::G910 if matches!(value, 0x00 | 0x01) => {
-                Some(vec![0x11, 0xff, 0x0a, 0x0e, value])
-            }
-            _ => None,
+        let packet: Option<Vec<u8>> = if matches!(value, 0x00 | 0x01) {
+            model.spec().mr_header.map(|header| {
+                let mut packet = header.to_vec();
+                packet.push(value);
+                packet
+            })
+        } else {
+            None
         };
 
         if let Some(mut data) = packet {
@@ -184,17 +184,25 @@ impl KeyboardApi for crate::keyboard::device::Keyboard {
             .ok_or_else(|| anyhow!("no device open"))?
             .model;
 
-        let packet: Option<Vec<u8>> = match model {
-            KeyboardModel::G815 => match value {
-                0x01 => Some(vec![0x11, 0xff, 0x0b, 0x1c, 0x01]),
-                0x02 => Some(vec![0x11, 0xff, 0x0b, 0x1c, 0x02]),
-                0x03 => Some(vec![0x11, 0xff, 0x0b, 0x1c, 0x04]),
-                _ => None,
-            },
-            KeyboardModel::G910 if (0x00..=0x07).contains(&value) => {
-                Some(vec![0x11, 0xff, 0x09, 0x1e, value])
+        let spec = model.spec();
+        let packet: Option<Vec<u8>> = if let Some(header) = spec.mn_header {
+            if model == KeyboardModel::G910 && !(0x00..=0x07).contains(&value) {
+                None
+            } else {
+                let val = if let Some(map) = spec.mn_map {
+                    match map.iter().find(|&&(lookup_val, _)| lookup_val == value) {
+                        Some(&(_, byte)) => byte,
+                        None => return Ok(()),
+                    }
+                } else {
+                    value
+                };
+                let mut packet: Vec<u8> = header.to_vec();
+                packet.push(val);
+                Some(packet)
             }
-            _ => None,
+        } else {
+            None
         };
 
         if let Some(mut data) = packet {
@@ -211,14 +219,14 @@ impl KeyboardApi for crate::keyboard::device::Keyboard {
             .ok_or_else(|| anyhow!("no device open"))?
             .model;
 
-        let packet: Option<Vec<u8>> = match model {
-            KeyboardModel::G815 if matches!(value, 0x00 | 0x01) => {
-                Some(vec![0x11, 0xff, 0x0a, 0x2b, value])
-            }
-            KeyboardModel::G910 if matches!(value, 0x00 | 0x01) => {
-                Some(vec![0x11, 0xff, 0x08, 0x2e, value])
-            }
-            _ => None,
+        let packet: Option<Vec<u8>> = if matches!(value, 0x00 | 0x01) {
+            model.spec().gkeys_header.map(|header| {
+                let mut packet = header.to_vec();
+                packet.push(value);
+                packet
+            })
+        } else {
+            None
         };
 
         if let Some(mut data) = packet {
@@ -235,15 +243,7 @@ impl KeyboardApi for crate::keyboard::device::Keyboard {
             .ok_or_else(|| anyhow!("no device open"))?
             .model;
 
-        let packet: Option<Vec<u8>> = match model {
-            KeyboardModel::G213
-            | KeyboardModel::G410
-            | KeyboardModel::G610
-            | KeyboardModel::G810
-            | KeyboardModel::GPro => Some(vec![0x11, 0xff, 0x0d, 0x5a, 0x00, 0x01]),
-            KeyboardModel::G910 => Some(vec![0x11, 0xff, 0x10, 0x5e, 0x00, 0x01]),
-            _ => None,
-        };
+        let packet: Option<Vec<u8>> = model.spec().startup_header.map(<[u8]>::to_vec);
 
         if let Some(mut data) = packet {
             data.push(mode as u8);
@@ -260,10 +260,11 @@ impl KeyboardApi for crate::keyboard::device::Keyboard {
             .ok_or_else(|| anyhow!("no device open"))?
             .model;
 
-        let packet: Option<Vec<u8>> = match model {
-            KeyboardModel::G815 => Some(vec![0x11, 0xff, 0x11, 0x1a, mode as u8]),
-            _ => None,
-        };
+        let packet: Option<Vec<u8>> = model.spec().onboard_header.map(|header| {
+            let mut packet = header.to_vec();
+            packet.push(mode as u8);
+            packet
+        });
 
         if let Some(mut data) = packet {
             data.resize(20, 0x00);
