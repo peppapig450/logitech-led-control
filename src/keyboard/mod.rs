@@ -1,4 +1,5 @@
 pub mod api;
+pub mod colors;
 pub mod device;
 pub mod effects;
 pub mod model;

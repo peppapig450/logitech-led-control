@@ -1,5 +1,7 @@
 // Helper functions to print additional help messages
 
+use crate::keyboard::colors;
+
 pub fn print_keys_help() {
     const HELP: &str = r"Keys
 ----
@@ -117,22 +119,11 @@ pub fn print_samples_help() {
 }
 
 pub fn print_colors_help() {
-    const HELP: &str = r"Colors
-------
-black
-white
-red
-green
-blue
-yellow
-cyan
-magenta
-orange
-purple
-pink";
-
-    println!("{HELP}");
+    println!("Colors\n------");
+    for name in colors::color_names() {
+        print!("{name}");
+    }
 }
 
 // If additional  strings of this nature are added they should be moved to their own module
-pub const COLOR_HELP: &str = "Color value as rrggbb, rr, or name (red, green, blue, white, black, yellow, cyan, magenta, orange, purple, pink)";
+pub const COLOR_HELP: &str = colors::COLOR_HELP;

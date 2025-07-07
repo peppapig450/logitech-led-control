@@ -4,6 +4,7 @@ use std::borrow::Cow;
 
 use super::{
     Color, Key, KeyGroup, OnBoardMode, StartupMode,
+    colors::lookup_color,
     effects::{NativeEffect, NativeEffectPart, NativeEffectStorage},
 };
 
@@ -29,28 +30,13 @@ fn ascii_lower(input: &str) -> Cow<'_, str> {
     }
 }
 
-/// Common color name -> RGB mapping (lowercase)
-static COLOR_NAMES: Map<&'static str, Color> = phf_map! {
-    "black"   => Color::new(0x00, 0x00, 0x00),
-    "white"   => Color::new(0xff, 0xff, 0xff),
-    "red"     => Color::new(0xff, 0x00, 0x00),
-    "green"   => Color::new(0x00, 0xff, 0x00),
-    "blue"    => Color::new(0x00, 0x00, 0xff),
-    "yellow"  => Color::new(0xff, 0xff, 0x00),
-    "cyan"    => Color::new(0x00, 0xff, 0xff),
-    "magenta" => Color::new(0xff, 0x00, 0xff),
-    "orange"  => Color::new(0xff, 0xa5, 0x00),
-    "purple"  => Color::new(0x80, 0x00, 0x80),
-    "pink"    => Color::new(0xff, 0xc0, 0xcb),
-};
-
 /// Parse a color in hexadecimal `rrggbb` form (optionally `rr` for G610).
 pub fn parse_color(val: &str) -> Option<Color> {
     // Accept  name, "rrggbb" or "rr" (G610 grayscale). Optional leading '#'.
     let lower = ascii_lower(val);
     let value = lower.trim_start_matches('#');
 
-    if let Some(&color) = COLOR_NAMES.get(value) {
+    if let Some(color) = lookup_color(value) {
         return Some(color);
     }
 
