@@ -115,7 +115,7 @@ pub fn print_samples_help() {
     println!("Samples\n-------\n");
     println!("logi-led -p profile.txt\n    Load a profile from a file");
     println!("logi-led -k logo ff0000\n    Set the logo key red");
-    println!("logi-led -a 00ff00\n    Set all keys green");
+    println!("logi-led -A 00ff00\n    Set all keys green");
 }
 
 pub fn print_colors_help() {

@@ -38,7 +38,7 @@ logi-led list-keyboards
 Set all keys to red without committing immediately:
 
 ```bash
-logi-led set-all --color ff0000 --no-commit
+logi-led set --all ff0000 --no-commit
 ```
 
 Display available key names and effect descriptions:
