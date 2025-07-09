@@ -121,7 +121,7 @@ pub fn print_samples_help() {
 pub fn print_colors_help() {
     println!("Colors\n------");
     for name in colors::color_names() {
-        print!("{name}");
+        println!("{name}");
     }
 }
 
