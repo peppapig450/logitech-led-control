@@ -1,0 +1,67 @@
+name: Dependabot Auto Merge
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, ready_for_review, labeled, unlabeled]
+
+# Lock down perms globally
+permissions: {}
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}-dependabot-automerge
+  cancel-in-progress: false
+
+jobs:
+  dependabot-automerge:
+    # Only run for non-draft PRs authored by Dependabot
+    if: >
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # Job-scoped minimal perms
+    permissions:
+      contents: write # needed to merge
+      pull-requests: write # needed to approve / enable auto-merge
+      checks: read # read CI status
+      statuses: read # read commit statuses
+
+    env:
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+        with:
+          alert-lookup: false
+          compat-lookup: false
+          # If we need private alert/compat lookups, we need a PAT with the 'repos' scope
+          # github-token: ${{ secrets.DEPENDABOT_AUTOMERGE_TOKEN }}
+
+      - name: Write review body to file
+        run: |
+          cat > review.txt <<'🤖AUTOMATED_CONFIDENCE🤖'
+          🤖: LGTM!!!!!
+
+          This workflow auto-approves and enables auto-merge for Dependabot PRs when CI passes.
+
+          Because yes, I trust the bot more than I trust myself to review transitive `left-pad` upgrades.
+          🤖AUTOMATED_CONFIDENCE🤖
+
+      - name: Auto-approve if not already approved
+        run: |
+          # If the target PR is already approved, this is a no-op
+          current="$(gh pr view -- "$PR_URL" --json reviewDecision -q .reviewDecision 2> /dev/null || echo "")"
+          if [[ ${current:-} != "APPROVED" ]]; then
+            gh pr review --approve -b review.txt -- "$PR_URL"
+          fi
+
+      - name: Decide & enable auto-merge
+        run: |
+          .github/scripts/enable-automerge.sh \
+            "${{ steps.meta.outputs.dependency-type }}" \
+            "${{ steps.meta.outputs.update-type }}" \
+            "$PR_URL"
