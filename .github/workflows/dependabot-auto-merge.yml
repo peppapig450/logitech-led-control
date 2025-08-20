@@ -29,7 +29,7 @@ jobs:
 
     env:
       PR_URL: ${{ github.event.pull_request.html_url }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.DEPENDABOT_AUTOMERGE_TOKEN }}
 
     steps:
       - name: Fetch Dependabot metadata
@@ -38,8 +38,6 @@ jobs:
         with:
           alert-lookup: false
           compat-lookup: false
-          # If we need private alert/compat lookups, we need a PAT with the 'repos' scope
-          # github-token: ${{ secrets.DEPENDABOT_AUTOMERGE_TOKEN }}
 
       - name: Write review body to file
         run: |
