@@ -10,10 +10,10 @@ pub fn list_keyboards() -> Result<()> {
     let mut seen = HashSet::new();
 
     for dev in devices {
-        if let Some(serial_num) = &dev.serial_number {
-            if !seen.insert(serial_num.clone()) {
-                continue;
-            }
+        if let Some(serial_num) = &dev.serial_number
+            && !seen.insert(serial_num.clone())
+        {
+            continue;
         }
 
         println!(
