@@ -8,36 +8,34 @@ on:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   fmt:
+    name: rustfmt
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          components: rustfmt
 
-      - name: Cache Cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: Run rustfmt
+      - name: Check formatting
         run: cargo fmt --all -- --check
 
-  clippy:
+  checks:
+    name: clippy + tests (${{ matrix.features || 'default features' }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         features:
           - ""
@@ -47,56 +45,19 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          components: clippy
 
-      - name: Install system dependencies
+      - name: Install system dependencies (Linux)
+        if: contains(matrix.features, '') || contains(matrix.features, '--no-default-features')
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y libudev-dev
-
-      - name: Cache Cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          sudo apt-get install --no-install-recommends libudev-dev
 
       - name: Run Clippy
-        run: cargo clippy --all-targets ${{ matrix.features }} -- -D warnings -D clippy::pedantic -A clippy::too_many_lines
-
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        features:
-          - ""
-          - "--no-default-features"
-          - "--all-features"
-
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: Install system dependencies
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libudev-dev
-
-      - name: Cache Cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          cargo clippy --all-targets ${{ matrix.features }} --locked -- \
+           -D warnings \
+           -D clippy::pedantic \
+           -A clippy::too_many_lines
 
       - name: Run tests
-        run: cargo test ${{ matrix.features }} --verbose
+        run: cargo test ${{ matrix.features }} --locked --verbose
