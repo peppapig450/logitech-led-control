@@ -28,10 +28,11 @@ jobs:
       statuses: read # read commit statuses
 
     env:
-      PR_URL: ${{ github.event.pull_request.html_url }}
-      GH_TOKEN: ${{ secrets.DEPENDABOT_AUTOMERGE_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
+      - uses: actions/checkout@v5
+
       - name: Fetch Dependabot metadata
         id: meta
         uses: dependabot/fetch-metadata@v2
@@ -44,4 +45,4 @@ jobs:
           .github/scripts/enable-automerge.sh \
             "${{ steps.meta.outputs.dependency-type }}" \
             "${{ steps.meta.outputs.update-type }}" \
-            "$PR_URL"
+            "${{ github.event.pull_request.html_url }}"
