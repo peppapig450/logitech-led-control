@@ -39,24 +39,6 @@ jobs:
           alert-lookup: false
           compat-lookup: false
 
-      - name: Write review body to file
-        run: |
-          cat > review.txt <<'🤖AUTOMATED_CONFIDENCE🤖'
-          🤖: LGTM!!!!!
-
-          This workflow auto-approves and enables auto-merge for Dependabot PRs when CI passes.
-
-          Because yes, I trust the bot more than I trust myself to review transitive `left-pad` upgrades.
-          🤖AUTOMATED_CONFIDENCE🤖
-
-      - name: Auto-approve if not already approved
-        run: |
-          # If the target PR is already approved, this is a no-op
-          current="$(gh pr view -- "$PR_URL" --json reviewDecision -q .reviewDecision 2> /dev/null || echo "")"
-          if [[ ${current:-} != "APPROVED" ]]; then
-            gh pr review --approve -b review.txt -- "$PR_URL"
-          fi
-
       - name: Decide & enable auto-merge
         run: |
           .github/scripts/enable-automerge.sh \
