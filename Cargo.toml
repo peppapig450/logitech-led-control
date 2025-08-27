@@ -13,7 +13,7 @@ bitflags = "2.9.3"
 clap = { version = "4.5.46", features = ["derive", "env"] }
 hidapi = "2.6.3"
 num_enum = "0.7.4"
-phf = { version = "0.12.1", features = ["macros"] }
+phf = { version = "0.13.1", features = ["macros"] }
 strum = "0.27.2"
 strum_macros = "0.27.2"
 rusb = { version = "0.9.4", optional = true }
