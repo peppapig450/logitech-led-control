@@ -82,10 +82,7 @@ impl Keyboard {
             .ok_or_else(|| anyhow!("no device open"))?;
 
         match data.len() {
-            0..=20 => {
-                dev.write(data)?;
-            }
-            64 => {
+            0..=20 | 64 => {
                 dev.write(data)?;
             }
             n => return Err(anyhow!("invalid packet length: {n}")),
