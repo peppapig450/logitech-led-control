@@ -9,7 +9,7 @@ repository = "https://github.com/peppapig450/logitech-led-control"
 
 [dependencies]
 anyhow = "1.0.99"
-bitflags = "2.9.4"
+bitflags = "2.10.0"
 clap = { version = "4.5.49", features = ["derive", "env"] }
 hidapi = "2.6.3"
 num_enum = "0.7.5"
