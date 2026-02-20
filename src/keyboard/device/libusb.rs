@@ -99,7 +99,7 @@ impl Keyboard {
             handle.detach_kernel_driver(1).ok();
         }
         if let Err(e) = handle.claim_interface(1) {
-            return Err(anyhow!("{}", e));
+            return Err(anyhow!("{e}"));
         }
         Ok(Self {
             _ctx: ctx,
@@ -143,7 +143,7 @@ impl Keyboard {
 
         handle
             .write_control(req_type, 0x09, value, 1, data, Duration::from_millis(2000))
-            .map_err(|e| anyhow!("{}", e))?;
+            .map_err(|e| anyhow!("{e}"))?;
 
         Ok(())
     }
