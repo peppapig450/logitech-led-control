@@ -15,7 +15,7 @@ hidapi = "2.6.4"
 num_enum = "0.7.5"
 phf = { version = "0.13.1", features = ["macros"] }
 strum = "0.28.0"
-strum_macros = "0.27.2"
+strum_macros = "0.28.0"
 rusb = { version = "0.9.4", optional = true }
 clap_complete = "4.5.66"
 serde = { version = "1", features = ["derive"] }
