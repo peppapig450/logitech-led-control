@@ -11,7 +11,7 @@ repository = "https://github.com/peppapig450/logitech-led-control"
 anyhow = "1.0.102"
 bitflags = "2.11.1"
 clap = { version = "4.6.0", features = ["derive", "env"] }
-hidapi = "2.6.5"
+hidapi = "2.6.6"
 num_enum = "0.7.6"
 phf = { version = "0.13.1", features = ["macros"] }
 strum = "0.28.0"
